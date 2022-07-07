@@ -40,7 +40,7 @@ try {
             y: 0,
             image_array: mbg,
             image_length: mbg.length,
-            level: 4,
+            level: 1,
             show_level: hmUI.show_level.ONLY_NORMAL
           }),
           // hmUI.createWidget(hmUI.widget.IMG, {
@@ -224,7 +224,7 @@ try {
               y: 182,
               image_array: mf,
               image_length: mf.length,
-              level: 4,
+              level: 1,
               show_level: hmUI.show_level.ONLY_NORMAL
             }),
           hmUI.createWidget(hmUI.widget.IMG, {
