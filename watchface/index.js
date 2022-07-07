@@ -52,8 +52,8 @@ try {
           //   show_level: hmUI.show_level.ONLY_NORMAL
           // }),
           hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
-            x: 120,
-            y: 130,
+            x: 140,
+            y: 150,
             image_array: moonArray,
             image_length: moonArray.length,
             level: 1,
@@ -366,18 +366,33 @@ try {
           click_func: app4
         })
 
-        const app5Button = txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 310,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '关于',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: app5
-        })
+        
+
+          const app6Button = txtGroup.createWidget(hmUI.widget.BUTTON, {
+            x: 0,
+            y: 310,
+            w: fullWidth,
+            h: 50,
+            press_color: 0x555555,
+            normal_color: 0x3d3d3d,
+            text: '尺子',
+            color: 0xffffff,
+            text_size: 24,
+            click_func: app6
+          })
+
+          const app5Button = txtGroup.createWidget(hmUI.widget.BUTTON, {
+            x: 0,
+            y: 370,
+            w: fullWidth,
+            h: 50,
+            press_color: 0x555555,
+            normal_color: 0x3d3d3d,
+            text: '关于',
+            color: 0xffffff,
+            text_size: 24,
+            click_func: app5
+          })
 
         //---------------------------------微信收款-------------------------------------
 
@@ -868,8 +883,24 @@ try {
           src: 'qr.png'
         })
 
+        //--------------------------------尺子-------------------------------------
+          let app6Group = hmUI.createWidget(hmUI.widget.GROUP, {
+            x: 0,
+            y: 0,
+            w: fullWidth,
+            h: fullHeight
+          })
+          setGroupVisible(app5Group, false)
 
-       
+          app6Group.createWidget(hmUI.widget.IMG, {
+            x: 0,
+            y: 0,
+            w: fullWidth,
+            h: fullHeight,
+            src: 'ruler.png'
+          })
+
+          setGroupVisible(app6Group, false)
 
         
 
@@ -924,6 +955,14 @@ try {
           goin(app5Group)
           pages.push("app5")
         }
+
+          function app6() {
+            if (pages[pages.length - 1] != "menu") { return }
+            //setGroupVisible(app5Group, true)
+            //app5Group.setProperty(hmUI.prop.VISIBLE, true);
+            goin(app6Group)
+            pages.push("app6")
+          }
 
         function goback(){ //返回上一层
           if (pages.length > 1){
