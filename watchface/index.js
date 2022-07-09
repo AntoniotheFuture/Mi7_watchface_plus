@@ -1117,11 +1117,12 @@ try {
     g.module = DeviceRuntimeCore.WatchFace({
       init_view() {
         const topBtnX = 55;
-        const topBtnY = 0;
+        const topBtnY = 2;
         const bottomBtnX = 55;
-        const bottomBtnY = 440;
+        const bottomBtnY = 425;
         const fullWidth = 192;
         const fullHeight = 490;
+        const iconBtnW = 65;
 
         // hmUI.createWidget(hmUI.widget.IMG, {
         //     x: 0,
@@ -1247,8 +1248,9 @@ try {
         showToast('lunar_day:' + jstime.lunar_day + '\n')
         console.log(jstime)
         //定时器每30分钟更新背景图和月相图
+        let mainTimer
         try {
-          let mainTimer = createTimer(
+          mainTimer = createTimer(
             100,
             1800000,
             function (option) {
@@ -1295,8 +1297,9 @@ try {
 
         var pages = ['home'];
         const img_bkg = hmUI.createWidget(hmUI.widget.IMG, { //小程序图标
-          x: 44,
+          x: 38,
           y: 401,
+
           src: "apps.png",
           show_level: hmUI.show_level.ONLY_NORMAL
         })
@@ -1399,6 +1402,12 @@ try {
           text_style: hmUI.text_style.WRAP,
         })
 
+        app1Group.createWidget(hmUI.widget.IMG, {
+          x: 74,
+          y: 350,
+          src: 'wechat.png'
+        })
+
         var wechatCode = "wxp://f2f0eWEfpXmzZbm81ToT4fYhhnx1_w1Lv"
 
         function updateWechatCode() {
@@ -1430,11 +1439,11 @@ try {
         }
         updateWechatCode()
 
-        const editWechat = app1Group.createWidget(hmUI.widget.IMG, { //小程序图标
-          x: bottomBtnX,
+        const editWechat = app1Group.createWidget(hmUI.widget.IMG, {
+          x: (fullWidth - iconBtnW) /2,
           y: bottomBtnY,
-          w: fullWidth,
-          h: 100,
+          w: iconBtnW,
+          h: 50,
           src: "edit.png"
         })
 
@@ -1509,6 +1518,12 @@ try {
           text_style: hmUI.text_style.WRAP,
         })
 
+        app2Group.createWidget(hmUI.widget.IMG, {
+          x: 77,
+          y: 350,
+          src: 'alipay.png'
+        })
+
         var alipayCode = "https://qr.alipay.com/fkx181795dfsbwm8usxip57"
 
         function updateAlipayCode() {
@@ -1540,8 +1555,10 @@ try {
         updateAlipayCode()
 
         const editAlipay = app2Group.createWidget(hmUI.widget.IMG, {
-          x: bottomBtnX,
+          x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
+          w: iconBtnW,
+          h: 50,
           src: "edit.png"
         })
 
@@ -1577,13 +1594,14 @@ try {
         //-------------------------------- 点数器-------------------------------------
 
         let count = 0;
+        let doVibrate = true;
+
         let app3Group = hmUI.createWidget(hmUI.widget.GROUP, { //点数器
           x: 0,
           y: 0,
           w: fullWidth,
           h: fullHeight
         })
-
         setGroupVisible(app3Group, false)
 
         app3Group.createWidget(hmUI.widget.FILL_RECT, {
@@ -1594,60 +1612,89 @@ try {
           color: 0x000000
         })
 
-        const toZero = app3Group.createWidget(hmUI.widget.IMG, {
-          x: bottomBtnX,
-          y: bottomBtnY,
-          src: "tozero.png"
-        })
-
-        toZero.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app3") {
-            return
+        app3Group.createWidget(hmUI.widget.BUTTON, {
+          x: 45,
+          y: 60,
+          w: 102,
+          h:50,
+          text:'归零',
+          press_color: 0x555555,
+          normal_color: 0x3d3d3d,
+          color: 0xffffff,
+          text_size: 18,
+          radius: 15,
+          click_func: () => {
+            if (pages[pages.length - 1] != "app3") {
+              return
+            }
+            count = 0;
+            countText.setProperty(hmUI.prop.MORE, {
+              text: count
+            });
           }
-          count = 0;
-          countText.setProperty(hmUI.prop.MORE, {
-            text: count
-          });
         })
 
-        app3Group.createWidget(hmUI.widget.FILL_RECT, {
+        const switchVibrate =  app3Group.createWidget(hmUI.widget.BUTTON, {
+          x: 45,
+          y: 120,
+          w: 102,
+          h: 50,
+          text: '震动开',
+          press_color: 0x555555,
+          normal_color: 0x3d3d3d,
+          color: 0xffffff,
+          text_size: 18,
+          radius: 15,
+          click_func: () => {
+            if (pages[pages.length - 1] != "app3") {
+              return
+            }
+            doVibrate = !doVibrate;
+            switchVibrate.setProperty(hmUI.prop.MORE, {
+              text: doVibrate ? '震动开' : '震动关'
+            })
+          }
+        })
+
+        const countText = app3Group.createWidget(hmUI.widget.TEXT, {
+          x: 2,
+          y: 172,
+          w: fullWidth - 4,
+          h: 70,
+          align_h: hmUI.align.CENTER_H,
+          align_v: hmUI.align.CENTER_V,
+          text_size: 56,
+          color: 0xffd700,
+          text: 0
+        })
+
+        const addCount = app3Group.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
-          y: 100,
+          y: 242,
           w: fullWidth,
-          h: 260,
+          h: 250,
+          radius: fullWidth / 2,
           color: 0xfffafa,
           text_size: 36,
           color: 0x0f0f0f,
           text: 0
         })
 
-        const countText = app3Group.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 100,
-          w: fullWidth,
-          h: 260,
-          align_h: hmUI.align.CENTER_H,
-          align_v: hmUI.align.CENTER_V,
-
-          text_size: 56,
-          color: 0xffd700,
-          text: 0
-        })
-
-        let doVibrate = true;
-        const switchVibrate = app3Group.createWidget(hmUI.widget.TEXT, {
-          x: 0,
+        app3Group.createWidget(hmUI.widget.TEXT, {
+          x: 2,
           y: 380,
-          w: fullWidth,
-          h: 50,
+          w: fullWidth - 4,
+          h: 18,
+          text_size: 18,
+          color: 0xa5a5a5,
           align_h: hmUI.align.CENTER_H,
           align_v: hmUI.align.CENTER_V,
-          text_size: 24,
-          color: 0xaaaaaa,
-          text: '震动开'
+          text: "点击+1"
         })
 
-        countText.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+        
+
+        addCount.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           if (pages[pages.length - 1] != "app3") {
             return
           }
@@ -1662,22 +1709,10 @@ try {
             } catch (e) {
               showToast('不支持震动\n')
             }
-
           }
           countText.setProperty(hmUI.prop.MORE, {
             text: count
           });
-        })
-
-        switchVibrate.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app3") {
-            return
-          }
-          doVibrate = !doVibrate;
-          switchVibrate.setProperty(hmUI.prop.MORE, {
-            text: doVibrate ? '震动开' : '震动关'
-          })
-
         })
 
         //--------------------------------吃什么-------------------------------------
@@ -1706,31 +1741,32 @@ try {
           color: 0x000000
         })
 
-        const fastfoodBtn = app4Group.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
+        app4Group.createWidget(hmUI.widget.BUTTON, {
+          x: 5,
           y: 130,
-          w: fullWidth,
+          w: fullWidth - 10,
           h: 50,
+          radius: 15,
           press_color: 0x555555,
           normal_color: 0x3d3d3d,
           text: '快餐',
           color: 0xffffff,
-          text_size: 24,
-          click_func: gotoFastfood
+          text_size: 18,
+          click_func: () => { gotoFastfood() }
         })
 
-        const dinnerBtn = app4Group.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
+        app4Group.createWidget(hmUI.widget.BUTTON, {
+          x: 5,
           y: 250,
-          w: fullWidth,
+          w: fullWidth -10,
           h: 50,
+          radius:15,
           press_color: 0x555555,
           normal_color: 0x3d3d3d,
           text: '正餐',
           color: 0xffffff,
-          text_size: 24,
-          click_func: gotoDinner,
-
+          text_size: 18,
+          click_func: () => { gotoDinner() }
         })
 
         let fastfoodGroup = hmUI.createWidget(hmUI.widget.GROUP, {
@@ -1771,38 +1807,41 @@ try {
           text: '还没选过'
         })
 
-        const fastfoodSelect = fastfoodGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
+        fastfoodGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 45,
           y: 350,
-          w: fullWidth,
+          w: 102,
           h: 50,
-          align_h: hmUI.align.CENTER_H,
-          text_size: 24,
+          text: '选择',
+          press_color: 0x555555,
+          normal_color: 0x3d3d3d,
           color: 0xffffff,
-          text: '选择'
+          text_size: 18,
+          radius: 15,
+          click_func: () => {
+            if (pages[pages.length - 1] != "fastfood") {
+              return
+            }
+            if (fastfoodIndex == -1) {
+              return
+            }
+            if (typeof (fastFoodsStat[fastfoodIndex + '']) == 'undefined') {
+              fastFoodsStat[fastfoodIndex + ''] = 0;
+            } else {
+              fastFoodsStat[fastfoodIndex + '']++;
+            }
+            updateFastFoodCount()
+          }
         })
 
         let fastfoodIndex = 0;
 
         const refreshFastfood = fastfoodGroup.createWidget(hmUI.widget.IMG, { //小程序图标
-          x: bottomBtnX,
+          x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
+          w: iconBtnW,
+          h: 50,
           src: "refresh.png"
-        })
-
-        fastfoodSelect.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "fastfood") {
-            return
-          }
-          if (fastfoodIndex == -1) {
-            return
-          }
-          if (typeof (fastFoodsStat[fastfoodIndex + '']) == 'undefined') {
-            fastFoodsStat[fastfoodIndex + ''] = 0;
-          } else {
-            fastFoodsStat[fastfoodIndex + '']++;
-          }
-          updateFastFoodCount()
         })
 
         refreshFastfood.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
@@ -1871,11 +1910,41 @@ try {
           text: '选择'
         })
 
+        dinnerGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 60,
+          y: 350,
+          w: 72,
+          h: 50,
+          text: '选择',
+          press_color: 0x555555,
+          normal_color: 0x3d3d3d,
+          color: 0xffffff,
+          text_size: 18,
+          radius: 15,
+          click_func: () => {
+            if (pages[pages.length - 1] != "dinner") {
+              return
+            }
+            if (dinnerIndex == -1) {
+              return
+            }
+            if (typeof (dinnersStat[dinnerIndex + '']) == 'undefined') {
+              dinnersStat[dinnerIndex + ''] = 0;
+            } else {
+              dinnersStat[dinnerIndex + '']++;
+            }
+            updateDinnerCount()
+          }
+        })
+        
+
 
         var dinnerIndex = 1;
         const refreshDinner = dinnerGroup.createWidget(hmUI.widget.IMG, { //小程序图标
-          x: bottomBtnX,
+          x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
+          w: iconBtnW,
+          h: 50,
           src: "refresh.png"
         })
 
@@ -1890,20 +1959,6 @@ try {
           });
         })
 
-        dinnerSelect.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "dinner") {
-            return
-          }
-          if (dinnerIndex == -1) {
-            return
-          }
-          if (typeof (dinnersStat[dinnerIndex + '']) == 'undefined') {
-            dinnersStat[dinnerIndex + ''] = 0;
-          } else {
-            dinnersStat[dinnerIndex + '']++;
-          }
-          updateDinnerCount()
-        })
 
         function updateDinnerCount() {
           dinnerCount.setProperty(hmUI.prop.MORE, {
@@ -2134,7 +2189,7 @@ try {
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
           x: 2,
-          y: 340,
+          y: 320,
           text: '2',
           w: (fullWidth - 6) / 2,
           h: 66,
@@ -2148,7 +2203,7 @@ try {
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
           x: (fullWidth - 6) / 2 + 4,
-          y: 340,
+          y: 320,
           text: '3',
           w: (fullWidth - 6) / 2,
           h: 66,
@@ -2162,7 +2217,7 @@ try {
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
           x: fullWidth / 3,
-          y: 410,
+          y: 390,
           text: '←',
           w: fullWidth / 3,
           h: 66,
@@ -2324,14 +2379,12 @@ try {
         pushLog('V1.0\n')
 
         const backBUtton = hmUI.createWidget(hmUI.widget.IMG, { //返回按键
-          x: topBtnX,
+          x: (fullWidth - iconBtnW) / 2,
           y: topBtnY,
           src: "back.png",
         })
         backBUtton.setProperty(hmUI.prop.VISIBLE, false);
-        backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          goback();
-        })
+        backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) {goback();})
 
         //获取初始亮度
         try{
