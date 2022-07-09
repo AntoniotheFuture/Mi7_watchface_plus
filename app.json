@@ -2,15 +2,15 @@
   "configVersion": "v1",
   "app": {
       "appId": 166120001,
-      "appName": "L66火星",
+      "appName": "增强版表盘",
       "appType": "watchface",
       "version": {
           "code": 1,
           "name": "1.0"
       },
       "icon": "images/preview.png",
-      "vender": "huami",
-      "description": "全功能可编辑表盘"
+      "vender": "Antonio Future",
+      "description": "收款码/点数器/吃什么/月相"
   },
   "debug": true,
   "permissions": [

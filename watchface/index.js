@@ -1,4 +1,4 @@
-//qrcode 相关代码
+//------------------------qrcode 相关代码开始------------------------
 /**
  * @fileoverview
  * - Using the 'QRCode for Javascript library'
@@ -1063,7 +1063,8 @@ var QRCode;
   QRCode.prototype.getStr = function (str) {
     var result = '';
     var nCount = this._oQRCode.getModuleCount();
-    console.log("nCount:" + nCount)
+    console.log("nCount:" + nCount + '\n')
+    
 
     for (var row = 0; row < nCount; row++) {
       for (var col = 0; col < nCount; col++) {
@@ -1083,7 +1084,8 @@ var QRCode;
   QRCode.CorrectLevel = QRErrorCorrectLevel;
 })();
 
-//start from here
+//------------------------qrcode 相关代码结束------------------------
+//------------------------表盘开始------------------------
 try {
   (() => {
     var n = __$$hmAppManager$$__.currentApp;
@@ -1104,6 +1106,14 @@ try {
     ]
     const mbg = ['mo/1.png', 'mo/2.png', 'mo/3.png', 'mo/4.png', 'mo/5.png', 'mo/6.png', 'mo/7.png', 'mo/8.png']
     const mf = ['mo/1f.png', 'mo/2f.png', 'mo/3f.png', 'mo/4f.png', 'mo/5f.png', 'mo/6f.png', 'mo/7f.png', 'mo/8f.png']
+
+    function showToast(t) {
+      try {
+        hmUI.showToast({
+          text: t
+        })
+      } catch (e) { }
+    }
     g.module = DeviceRuntimeCore.WatchFace({
       init_view() {
         const topBtnX = 55;
@@ -1234,7 +1244,7 @@ try {
 
 
         const jstime = hmSensor.createSensor(hmSensor.id.TIME)
-
+        showToast('lunar_day:' + jstime.lunar_day + '\n')
         console.log(jstime)
         //定时器每30分钟更新背景图和月相图
         try {
@@ -1270,16 +1280,13 @@ try {
               level: ld - 1
             })
           } catch (e) {
-            console.log('不支持农历')
+            console.log('不支持农历\n')
           }
         }
         //更新背景和前景图
 
-        //状态显示
+        //todo 状态显示
         const battery = hmSensor.createSensor(hmSensor.id.BATTERY)
-
-        console.log('The current battery level is ' + battery.current + '\r\n')
-
 
         //---------------------------------小程序入口-------------------------------------
         //震动
@@ -1302,9 +1309,7 @@ try {
 
         function switchUI(b) {
           img_bkg.setProperty(hmUI.prop.VISIBLE, b);
-          //txtBg.setProperty(hmUI.prop.VISIBLE, !b);
           setGroupVisible(txtGroup, !b);
-          //txtGroup.setProperty(hmUI.prop.VISIBLE, !b);
           backBUtton.setProperty(hmUI.prop.VISIBLE, !b);
         }
 
@@ -1327,85 +1332,31 @@ try {
           color: 0x000000
         })
 
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 70,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '微信收款',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(1) }
-        })
+        var apps = [
+          {text:'微信收款',id:1},
+          {text: '支付宝收款', id: 2},
+          { text: '点数器', id: 3 },
+          { text: '吃什么', id: 4 },
+          { text: '尺子', id: 6 },
+          { text: '关于', id: 5 },
+        ]
 
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 130,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '支付宝收款',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(2) }
-        })
-
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 190,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '点数器',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(3) },
-
-        })
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 250,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '吃什么',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(4) }
-        })
-
-
-
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 310,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '尺子',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(6) }
-        })
-
-        txtGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 0,
-          y: 370,
-          w: fullWidth,
-          h: 50,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          text: '关于',
-          color: 0xffffff,
-          text_size: 24,
-          click_func: () => { openApp(5) }
-        })
+        for (let i = 0; i < apps.length; i++) {
+          const app = apps[i];
+          txtGroup.createWidget(hmUI.widget.BUTTON, {
+            x: 5,
+            y: 70 + i * 60,
+            w: fullWidth - 10,
+            h: 50,
+            press_color: 0x555555,
+            normal_color: 0x3d3d3d,
+            text: app['text'],
+            color: 0xffffff,
+            text_size: 18,
+            radius:15,
+            click_func: () => { openApp(app['id'],) }
+          })
+        }
 
         //---------------------------------微信收款-------------------------------------
 
@@ -1461,8 +1412,8 @@ try {
           });
           var str = qrcode.getStr()
           var cols = qrcode._oQRCode.getModuleCount()
-          
-          console.log(str)
+          showToast('qrcode Rows:' + cols)
+
           if (cols > 100) {
             textCode.setProperty(hmUI.prop.MORE, {
               text: "二维码过大",
@@ -1571,8 +1522,7 @@ try {
           });
           var str = qrcode.getStr()
           var cols = qrcode._oQRCode.getModuleCount()
-
-          console.log(str)
+          showToast('qrcode Rows:' + cols)
           if (cols > 100) {
             alpay.setProperty(hmUI.prop.MORE, {
               text: "二维码过大",
@@ -1589,7 +1539,7 @@ try {
         }
         updateAlipayCode()
 
-        const editAlipay = app2Group.createWidget(hmUI.widget.IMG, { //小程序图标
+        const editAlipay = app2Group.createWidget(hmUI.widget.IMG, {
           x: bottomBtnX,
           y: bottomBtnY,
           src: "edit.png"
@@ -1616,7 +1566,7 @@ try {
         })
         setGroupVisible(aliPayEdit, false)
 
-        aliPayEdit.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
+        aliPayEdit.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
           y: 0,
           w: fullWidth,
@@ -1636,7 +1586,7 @@ try {
 
         setGroupVisible(app3Group, false)
 
-        app3Group.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
+        app3Group.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
           y: 0,
           w: fullWidth,
@@ -1644,7 +1594,7 @@ try {
           color: 0x000000
         })
 
-        const toZero = app3Group.createWidget(hmUI.widget.IMG, { //小程序图标
+        const toZero = app3Group.createWidget(hmUI.widget.IMG, {
           x: bottomBtnX,
           y: bottomBtnY,
           src: "tozero.png"
@@ -1660,7 +1610,7 @@ try {
           });
         })
 
-        const countBg = app3Group.createWidget(hmUI.widget.FILL_RECT, {
+        app3Group.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
           y: 100,
           w: fullWidth,
@@ -1679,7 +1629,7 @@ try {
           align_h: hmUI.align.CENTER_H,
           align_v: hmUI.align.CENTER_V,
 
-          text_size: 48,
+          text_size: 56,
           color: 0xffd700,
           text: 0
         })
@@ -1710,10 +1660,7 @@ try {
               vibrate.stop()
               vibrate.start()
             } catch (e) {
-              console.log('不支持此功能')
-              hmUI.showToast({
-                text: '不支持此功能' // 支持多行显示
-              })
+              showToast('不支持震动\n')
             }
 
           }
@@ -2032,13 +1979,62 @@ try {
           text_style: hmUI.text_style.WRAP
         })
 
-        app5Group.createWidget(hmUI.widget.IMG, {
+        const logBg = app5Group.createWidget(hmUI.widget.FILL_RECT, {
+          x: 192,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight,
+          color: 0x000000
+        })
+
+        const logNav = app5Group.createWidget(hmUI.widget.IMG, {
           x: 5,
           y: 250,
           w: fullWidth - 10,
-          h: 100,
+          h: 200,
           src: 'qr.png'
         })
+
+        let logStr = 'log:'
+
+        const logs = app5Group.createWidget(hmUI.widget.TEXT, {
+          x: 192,
+          y: 80,
+          w: fullWidth - 10,
+          h: fullHeight - 80,
+          text: 'log:',
+          align_h: hmUI.align.LEFT,
+          text_size: 12,
+          color: 0xffffff,
+          text_style: hmUI.text_style.WRAP
+        })
+
+        logNav.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          if (pages[pages.length - 1] != "app5") {
+            return
+          }
+          logBg.setProperty(hmUI.prop.MORE, { x: 0 })
+          logs.setProperty(hmUI.prop.MORE, { x: 0 })
+          logNav.setProperty(hmUI.prop.MORE, { x: 192 })
+        })
+        logBg.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          if (pages[pages.length - 1] != "app5") {
+            return
+          }
+          logBg.setProperty(hmUI.prop.MORE, {x:192})
+          logs.setProperty(hmUI.prop.MORE, { x: 192 })
+          logNav.setProperty(hmUI.prop.MORE, { x: 5 })
+        })
+
+        function pushLog(log){
+          logStr += log
+          if(logStr.length > 150){
+            logStr = logStr.substring(logStr.length - 150,150)
+          }
+          logs.setProperty(hmUI.prop.MORE, {
+            text: logStr
+          })
+        }
 
         //--------------------------------尺子-------------------------------------
         let app6Group = hmUI.createWidget(hmUI.widget.GROUP, {
@@ -2260,6 +2256,10 @@ try {
                 alipayCode = inputStr
                 updateAlipayCode()
               }
+              setMaxBright()
+            }
+            if(p == 'app1' || p == 'app2'){
+              resetBright()
             }
           }
           if (views.length <= 0) {
@@ -2279,11 +2279,49 @@ try {
           });
         }
 
+        let isAutoBright
+        let bright
+
         function goin(ui) {
           views.push(ui);
-          //todo 设置收款界面的亮度
+          if (ui == app1Group || ui == app2Group ){
+            checkBright()
+            setMaxBright()
+          }
           setGroupVisible(ui, true);
         }
+        
+        //检查亮度设置
+        function checkBright(){
+          try {
+            isAutoBright = hmSetting.getScreenAutoBright()
+            if (!isAutoBright) {
+              bright = hmSetting.getBrightness()
+            }
+          } catch (e) { }
+        }
+
+        function setMaxBright(){
+          try {
+            hmSetting.setScreenAutoBright(false)
+            hmSetting.setBrightness(100)
+          } catch (e) {
+
+          }
+        }
+
+        //重置亮度
+        function resetBright(){
+          try {
+            if(isAutoBright){
+              hmSetting.setScreenAutoBright()
+            }else{
+              hmSetting.setBrightness(bright)
+            }
+          } catch (e) { }
+        }
+
+        pushLog('V1.0\n')
 
         const backBUtton = hmUI.createWidget(hmUI.widget.IMG, { //返回按键
           x: topBtnX,
