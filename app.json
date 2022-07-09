@@ -8,14 +8,12 @@
           "code": 1,
           "name": "1.0"
       },
-      "icon": "images/preview.png",
+      "icon": "1.png",
       "vender": "Antonio Future",
       "description": "收款码/点数器/吃什么/月相"
   },
   "debug": true,
-  "permissions": [
-      "gps"
-  ],
+  "permissions": [],
   "runtime": {
       "apiVersion": {
           "compatible": "1.0.0",
@@ -53,7 +51,7 @@
           "widgets": []
       },
       "watchface": {
-          "path": "watchface/index_monster3",
+          "path": "watchface/index",
           "main":1,
           "editable":0,
           "lockscreen":1,

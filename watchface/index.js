@@ -1096,16 +1096,44 @@ try {
       (new DeviceRuntimeCore.WidgetFactory(
           new DeviceRuntimeCore.HmDomApi(n, g)
         ),
-        n.app.__globals__),
-      p = Logger.getLogger("watchface6");
-    const dayImags = [
-      "2.png"
-    ];
+        n.app.__globals__)
+    let p
+    try{
+      p = DeviceRuntimeCore.HmLogger.getLogger("watchface6");
+    }catch(e){}
+     
+    //资源链接------------------------
     const moonArray = ['m/1.png', 'm/2.png', 'm/3.png', 'm/4.png', 'm/5.png', 'm/6.png', 'm/7.png', 'm/8.png', 'm/9.png', 'm/10.png', 'm/11.png', 'm/12.png', 'm/13.png', 'm/14.png',
       'm/15.png', 'm/16.png', 'm/17.png', 'm/18.png', 'm/19.png', 'm/20.png', 'm/21.png', 'm/22.png', 'm/23.png', 'm/24.png', 'm/25.png', 'm/26.png', 'm/27.png', 'm/28.png', 'm/29.png', 'm/30.png'
     ]
     const mbg = ['mo/1.png', 'mo/2.png', 'mo/3.png', 'mo/4.png', 'mo/5.png', 'mo/6.png', 'mo/7.png', 'mo/8.png']
     const mf = ['mo/1f.png', 'mo/2f.png', 'mo/3f.png', 'mo/4f.png', 'mo/5f.png', 'mo/6f.png', 'mo/7f.png', 'mo/8f.png']
+    
+    let mainTimer
+
+    const topBtnX = 55;
+    const topBtnY = 2;
+    const bottomBtnX = 55;
+    const bottomBtnY = 425;
+    const fullWidth = 192;
+    const fullHeight = 490;
+    const iconBtnW = 65;
+
+    const normalFont = 22;
+    const titleFont = 28;
+    const smallFont = 16;
+    const tinyFont = 12;
+    const xTinyFont = 10;
+
+    const darkBG = 0x000000;
+    const lightBG = 0x202020;
+    const lightText = 0xffffff;
+    const darkText = 0x000000;
+    const gold = 0xffd700;
+    const secondText = 0xa5a5a5;
+    const orange = 0xfc512d;
+    const btnPress = 0x555555;
+    
 
     function showToast(t) {
       try {
@@ -1116,22 +1144,6 @@ try {
     }
     g.module = DeviceRuntimeCore.WatchFace({
       init_view() {
-        const topBtnX = 55;
-        const topBtnY = 2;
-        const bottomBtnX = 55;
-        const bottomBtnY = 425;
-        const fullWidth = 192;
-        const fullHeight = 490;
-        const iconBtnW = 65;
-
-        // hmUI.createWidget(hmUI.widget.IMG, {
-        //     x: 0,
-        //     y: 0,
-        //     w: 192,
-        //     h: 490,
-        //     src: "2.png",
-        //     show_level: hmUI.show_level.ONLY_NORMAL
-        //   }),
         var bg
         var fg
         var moonface
@@ -1143,24 +1155,14 @@ try {
             level: 1,
             show_level: hmUI.show_level.ONLY_NORMAL
           }),
-          // hmUI.createWidget(hmUI.widget.IMG, {
-          //   x: 0,
-          //   y: 0,
-          //   w: 50,
-          //   h: 50,
-          //   src: "m/15.png",
-          //   show_level: hmUI.show_level.ONLY_NORMAL
-          // }),
           moonface = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
-            x: 140,
+            x: 157,
             y: 150,
             image_array: moonArray,
             image_length: moonArray.length,
             level: 1,
             show_level: hmUI.show_level.ONLY_NORMAL
           }),
-
-
 
           hmUI.createWidget(hmUI.widget.IMG_TIME, {
             hour_zero: 0,
@@ -1178,7 +1180,7 @@ try {
             show_level: hmUI.show_level.ONLY_NORMAL
           }),
           hmUI.createWidget(hmUI.widget.IMG_DATE, {
-            month_startX: 30,
+            month_startX: 15,
             month_startY: 150,
             month_sc_array: ["14.png","15.png","16.png","17.png","18.png","19.png","20.png","21.png","22.png","23.png"],
             month_tc_array: ["14.png","15.png","16.png","17.png","18.png","19.png","20.png","21.png","22.png","23.png"],
@@ -1248,13 +1250,12 @@ try {
         showToast('lunar_day:' + jstime.lunar_day + '\n')
         console.log(jstime)
         //定时器每30分钟更新背景图和月相图
-        let mainTimer
+        
         try {
           mainTimer = createTimer(
             100,
             1800000,
             function (option) {
-
               var h = Math.ceil(jstime.hour / 3) //jstime.hour
               if (h > mbg.length) {
                 return
@@ -1268,9 +1269,7 @@ try {
               updateMoonFace()
             }
           );
-        } catch (e) {
-
-        }
+        } catch (e) {}
 
         function updateMoonFace() {
           try {
@@ -1332,7 +1331,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         var apps = [
@@ -1351,11 +1350,11 @@ try {
             y: 70 + i * 60,
             w: fullWidth - 10,
             h: 50,
-            press_color: 0x555555,
-            normal_color: 0x3d3d3d,
+            press_color: lightBG,
+            normal_color: btnPress,
             text: app['text'],
-            color: 0xffffff,
-            text_size: 18,
+            color: lightText,
+            text_size: normalFont,
             radius:15,
             click_func: () => { openApp(app['id'],) }
           })
@@ -1376,19 +1375,27 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0xffffff
+          color: lightText
         })
 
         app1Group.createWidget(hmUI.widget.TEXT, {
           x: 0,
-          y: 100,
+          y: 60,
           w: fullWidth,
           h: 50,
-          color: 0x000000,
+          color: darkBG,
           text: "微信收款",
-          text_size: 24,
+          text_size: titleFont,
           text_style: hmUI.text_style.NONE,
           align_h: hmUI.align.CENTER_H,
+        })
+
+        app1Group.createWidget(hmUI.widget.IMG, {
+          x: 3,
+          y: 120,
+          src: 'qr/wechat.png',
+          w: 186,
+          h: 186,
         })
 
         const textCode = app1Group.createWidget(hmUI.widget.TEXT, {
@@ -1396,7 +1403,7 @@ try {
           y: 150,
           w: 180,
           h: 192,
-          color: 0x000000,
+          color: darkBG,
           text: "",
           text_size: 6,
           text_style: hmUI.text_style.WRAP,
@@ -1437,7 +1444,6 @@ try {
             text: str
           })
         }
-        updateWechatCode()
 
         const editWechat = app1Group.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) /2,
@@ -1451,6 +1457,8 @@ try {
           if (pages[pages.length - 1] != "app1") {
             return
           }
+          showToast('暂未实现')
+          return
           goin(wechatEdit)
           wechatEdit.setProperty(hmUI.prop.VISIBLE, true)
           pages.push('edit')
@@ -1473,7 +1481,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
 
@@ -1492,67 +1500,77 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0xffffff
+          color: lightText
         })
 
         app2Group.createWidget(hmUI.widget.TEXT, {
           x: 0,
-          y: 100,
+          y: 60,
           w: fullWidth,
           h: 50,
-          color: 0x000000,
+          color: darkBG,
           text: "支付宝收款",
-          text_size: 24,
+          text_size: titleFont,
           text_style: hmUI.text_style.NONE,
           align_h: hmUI.align.CENTER_H,
         })
 
-        const alpay = app2Group.createWidget(hmUI.widget.TEXT, {
-          x: 9,
-          y: 150,
-          w: 180,
-          h: 192,
-          color: 0x000000,
-          text: "",
-          text_size: 6,
-          text_style: hmUI.text_style.WRAP,
-        })
-
         app2Group.createWidget(hmUI.widget.IMG, {
-          x: 77,
-          y: 350,
-          src: 'alipay.png'
+          x: 3,
+          y: 120,
+          src: 'qr/alipay.png',
+          w: 186,
+          h: 186,
         })
 
-        var alipayCode = "https://qr.alipay.com/fkx181795dfsbwm8usxip57"
+        // const alpay = app2Group.createWidget(hmUI.widget.TEXT, {
+        //   x: 9,
+        //   y: 115,
+        //   w: 180,
+        //   h: 240,
+        //   color: darkBG,
+        //   text: "",
+        //   text_size: 6,
+        //   line_space: 0,
+        //   char_space: 0,
+        //   text_style: hmUI.text_style.WRAP,
+        // })
 
-        function updateAlipayCode() {
-          var qrcode = new QRCode({
-            text: alipayCode,
-            width: 128,
-            height: 128,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.L
-          });
-          var str = qrcode.getStr()
-          var cols = qrcode._oQRCode.getModuleCount()
-          showToast('qrcode Rows:' + cols)
-          if (cols > 100) {
-            alpay.setProperty(hmUI.prop.MORE, {
-              text: "二维码过大",
-              text_size: 18,
-            })
-            return
-          }
-          alpay.setProperty(hmUI.prop.MORE, {
-            x: Math.floor((fullWidth - 4) % cols / 2),
-            text_size: Math.floor((fullWidth - 4) / cols),
-            w: Math.floor((fullWidth - 4) / cols) * cols + 1,
-            text: str
-          })
-        }
-        updateAlipayCode()
+        // app2Group.createWidget(hmUI.widget.IMG, {
+        //   x: 77,
+        //   y: 365,
+        //   src: 'alipay.png'
+        // })
+
+        // var alipayCode = "https://qr.alipay.com/fkx181795dfsbwm8usxip57"
+
+        // function updateAlipayCode() {
+        //   var qrcode = new QRCode({
+        //     text: alipayCode,
+        //     width: 128,
+        //     height: 128,
+        //     colorDark: "#000000",
+        //     colorLight: "#ffffff",
+        //     correctLevel: QRCode.CorrectLevel.L
+        //   });
+        //   var str = qrcode.getStr()
+        //   var cols = qrcode._oQRCode.getModuleCount()
+        //   showToast('qrcode Rows:' + cols)
+        //   if (cols > 100) {
+        //     alpay.setProperty(hmUI.prop.MORE, {
+        //       text: "二维码过大",
+        //       text_size: 18,
+        //     })
+        //     return
+        //   }
+        //   alpay.setProperty(hmUI.prop.MORE, {
+        //     x: Math.floor((fullWidth - 4) % cols / 2),
+        //     text_size: Math.floor((fullWidth - 4) / cols),
+        //     w: Math.floor((fullWidth - 4) / cols) * cols + 1,
+        //     text: str
+        //   })
+        // }
+        
 
         const editAlipay = app2Group.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
@@ -1566,6 +1584,8 @@ try {
           if (pages[pages.length - 1] != "app2") {
             return
           }
+          showToast('暂未实现')
+          return
           goin(aliPayEdit)
           aliPayEdit.setProperty(hmUI.prop.VISIBLE, true)
           pages.push('edit')
@@ -1588,7 +1608,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         //-------------------------------- 点数器-------------------------------------
@@ -1609,7 +1629,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         app3Group.createWidget(hmUI.widget.BUTTON, {
@@ -1618,10 +1638,10 @@ try {
           w: 102,
           h:50,
           text:'归零',
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          color: 0xffffff,
-          text_size: 18,
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "app3") {
@@ -1639,20 +1659,17 @@ try {
           y: 120,
           w: 102,
           h: 50,
-          text: '震动开',
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          color: 0xffffff,
-          text_size: 18,
+          text: '震动',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "app3") {
               return
             }
             doVibrate = !doVibrate;
-            switchVibrate.setProperty(hmUI.prop.MORE, {
-              text: doVibrate ? '震动开' : '震动关'
-            })
           }
         })
 
@@ -1664,7 +1681,7 @@ try {
           align_h: hmUI.align.CENTER_H,
           align_v: hmUI.align.CENTER_V,
           text_size: 56,
-          color: 0xffd700,
+          color: gold,
           text: 0
         })
 
@@ -1674,19 +1691,18 @@ try {
           w: fullWidth,
           h: 250,
           radius: fullWidth / 2,
-          color: 0xfffafa,
+          color: lightBG,
           text_size: 36,
-          color: 0x0f0f0f,
           text: 0
         })
 
         app3Group.createWidget(hmUI.widget.TEXT, {
           x: 2,
-          y: 380,
+          y: 250,
           w: fullWidth - 4,
           h: 18,
-          text_size: 18,
-          color: 0xa5a5a5,
+          text_size: smallFont,
+          color: secondText,
           align_h: hmUI.align.CENTER_H,
           align_v: hmUI.align.CENTER_V,
           text: "点击+1"
@@ -1738,7 +1754,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         app4Group.createWidget(hmUI.widget.BUTTON, {
@@ -1747,11 +1763,11 @@ try {
           w: fullWidth - 10,
           h: 50,
           radius: 15,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          press_color: lightBG,
+          normal_color: btnPress,
           text: '快餐',
-          color: 0xffffff,
-          text_size: 18,
+          color: lightText,
+          text_size: normalFont,
           click_func: () => { gotoFastfood() }
         })
 
@@ -1761,11 +1777,11 @@ try {
           w: fullWidth -10,
           h: 50,
           radius:15,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          press_color: lightBG,
+          normal_color: btnPress,
           text: '正餐',
-          color: 0xffffff,
-          text_size: 18,
+          color: lightText,
+          text_size: normalFont,
           click_func: () => { gotoDinner() }
         })
 
@@ -1782,7 +1798,7 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         const fastfoodText = fastfoodGroup.createWidget(hmUI.widget.TEXT, {
@@ -1792,7 +1808,7 @@ try {
           h: 50,
           align_h: hmUI.align.CENTER_H,
           text_size: 32,
-          color: 0xffd700,
+          color: gold,
           text: '云吞'
         })
 
@@ -1802,8 +1818,8 @@ try {
           w: fullWidth,
           h: 50,
           align_h: hmUI.align.CENTER_H,
-          text_size: 18,
-          color: 0xffffff,
+          text_size: smallFont,
+          color: lightText,
           text: '还没选过'
         })
 
@@ -1813,10 +1829,10 @@ try {
           w: 102,
           h: 50,
           text: '选择',
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          color: 0xffffff,
-          text_size: 18,
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: smallFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "fastfood") {
@@ -1874,17 +1890,17 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
-        const dinnerText = dinnerGroup.createWidget(hmUI.widget.TEXT, { //小程序图标
+        const dinnerText = dinnerGroup.createWidget(hmUI.widget.TEXT, {
           x: 0,
           y: 200,
           w: fullWidth,
           h: 100,
           align_h: hmUI.align.CENTER_H,
           text_size: 32,
-          color: 0xffd700,
+          color: gold,
           text: '水煮鱼'
         })
 
@@ -1894,8 +1910,8 @@ try {
           w: fullWidth,
           h: 50,
           align_h: hmUI.align.CENTER_H,
-          text_size: 18,
-          color: 0xffffff,
+          text_size: smallFont,
+          color: lightText,
           text: '还没选过'
         })
 
@@ -1906,7 +1922,7 @@ try {
           h: 50,
           align_h: hmUI.align.CENTER_H,
           text_size: 24,
-          color: 0xffffff,
+          color: lightText,
           text: '选择'
         })
 
@@ -1916,10 +1932,10 @@ try {
           w: 72,
           h: 50,
           text: '选择',
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
-          color: 0xffffff,
-          text_size: 18,
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: smallFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "dinner") {
@@ -1997,50 +2013,45 @@ try {
           y: 0,
           w: fullWidth,
           h: fullHeight,
-          color: 0x000000
+          color: darkBG
         })
 
         app5Group.createWidget(hmUI.widget.TEXT, {
           x: 5,
-          y: 100,
+          y: 80,
           w: fullWidth - 10,
-          h: 20,
+          h: 32,
           text: '增强版表盘',
-          text_size: 28,
-          color: 0xffffff,
+          text_size: titleFont,
+          color: lightText,
+
           text_style: hmUI.text_style.NONE
         })
 
         app5Group.createWidget(hmUI.widget.TEXT, {
           x: 5,
-          y: 130,
+          y: 110,
           w: fullWidth - 10,
-          h: 20,
+          h: 24,
           text: '开发者：梁小蜗',
-          text_size: 20,
-          color: 0xfc512d,
+          text_size: smallFont,
+          color: orange,
           text_style: hmUI.text_style.WRAP
         })
 
         app5Group.createWidget(hmUI.widget.TEXT, {
           x: 5,
-          y: 160,
+          y: 140,
           w: fullWidth - 10,
-          h: 60,
+          h: 80,
           text: '这是免费开源软件，如果您付费了，请联系卖家退款',
           align_h: hmUI.align.LEFT,
-          text_size: 20,
-          color: 0xffffff,
+          text_size: smallFont,
+          color: lightText,
           text_style: hmUI.text_style.WRAP
         })
 
-        const logBg = app5Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 192,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: 0x000000
-        })
+       
 
         const logNav = app5Group.createWidget(hmUI.widget.IMG, {
           x: 5,
@@ -2050,36 +2061,55 @@ try {
           src: 'qr.png'
         })
 
+        const logBg = app5Group.createWidget(hmUI.widget.FILL_RECT, {
+          x: 0,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight,
+          color: darkBG
+        })
+
         let logStr = 'log:'
 
         const logs = app5Group.createWidget(hmUI.widget.TEXT, {
-          x: 192,
+          x: 0,
           y: 80,
           w: fullWidth - 10,
           h: fullHeight - 80,
           text: 'log:',
           align_h: hmUI.align.LEFT,
-          text_size: 12,
-          color: 0xffffff,
+          text_size: tinyFont,
+          color: lightText,
           text_style: hmUI.text_style.WRAP
         })
+
+        logBg.setProperty(hmUI.prop.VISIBLE, false)
+        logs.setProperty(hmUI.prop.VISIBLE, false)
 
         logNav.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           if (pages[pages.length - 1] != "app5") {
             return
           }
-          logBg.setProperty(hmUI.prop.MORE, { x: 0 })
-          logs.setProperty(hmUI.prop.MORE, { x: 0 })
-          logNav.setProperty(hmUI.prop.MORE, { x: 192 })
+          logBg.setProperty(hmUI.prop.VISIBLE, true)
+          logs.setProperty(hmUI.prop.VISIBLE, true)
         })
-        logBg.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+        logs.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           if (pages[pages.length - 1] != "app5") {
             return
           }
-          logBg.setProperty(hmUI.prop.MORE, {x:192})
-          logs.setProperty(hmUI.prop.MORE, { x: 192 })
-          logNav.setProperty(hmUI.prop.MORE, { x: 5 })
+          logBg.setProperty(hmUI.prop.VISIBLE, false)
+          logs.setProperty(hmUI.prop.VISIBLE, false)
         })
+
+        function pushLog(log) {
+          logStr += log
+          if (logStr.length > 150) {
+            logStr = logStr.substring(logStr.length - 150, 150)
+          }
+          logs.setProperty(hmUI.prop.MORE, {
+            text: logStr
+          })
+        }
 
         function pushLog(log){
           logStr += log
@@ -2117,7 +2147,7 @@ try {
 
         let inputGroup = hmUI.createWidget(hmUI.widget.GROUP,{
           x:0,
-          y:96,
+          y:0,
           w: fullWidth,
           h:fullHeight
         })
@@ -2130,7 +2160,7 @@ try {
           w: fullWidth,
           h: 84,
           radius: 15,
-          color: 0x3d3d3d
+          color: btnPress
         })
 
         let inputBox = inputGroup.createWidget(hmUI.widget.TEXT, {
@@ -2139,21 +2169,21 @@ try {
           w: fullWidth - 10,
           h: 80,
           text: '',
-          text_size: 18,
+          text_size: smallFont,
           line_space: 2,
-          color: 0xffffff,
+          color: lightText,
           text_style: hmUI.text_style.WRAP
         })
 
         let inputCodeBox = inputGroup.createWidget(hmUI.widget.TEXT, {
           x: 5,
-          y: 230,
+          y: 220,
           w: fullWidth - 10,
-          h: 18,
+          h: 24,
           text: '',
-          text_size: 16,
+          text_size: smallFont,
           line_space: 2,
-          color: 0xffffff,
+          color: lightText,
           text_style: hmUI.text_style.WRAP
         })
 
@@ -2166,10 +2196,10 @@ try {
           w: (fullWidth - 6) / 2,
           h: 66,
           radius:5,
-          text_size: 24,
-          color: 0xffffff,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          text_size: titleFont,
+          color: lightText,
+          press_color: lightBG,
+          normal_color: btnPress,
           click_func: () => { inputCodeX('0')}
         })
 
@@ -2180,10 +2210,10 @@ try {
           w: (fullWidth - 6) / 2,
           h: 66,
           radius: 5,
-          text_size:24,
-          color: 0xffffff,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          text_size:titleFont,
+          color: lightText,
+          press_color: lightBG,
+          normal_color: btnPress,
           click_func: () => { inputCodeX('1')}
         })
 
@@ -2194,10 +2224,10 @@ try {
           w: (fullWidth - 6) / 2,
           h: 66,
           radius: 5,
-          text_size: 24,
-          color: 0xffffff,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          text_size: titleFont,
+          color: lightText,
+          press_color: lightBG,
+          normal_color: btnPress,
           click_func: () => { inputCodeX('2') }
         })
 
@@ -2208,10 +2238,10 @@ try {
           w: (fullWidth - 6) / 2,
           h: 66,
           radius: 5,
-          text_size: 24,
-          color: 0xffffff,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          text_size: titleFont,
+          color: lightText,
+          press_color: lightBG,
+          normal_color: btnPress,
           click_func: () => { inputCodeX('3') }
         })
 
@@ -2222,10 +2252,10 @@ try {
           w: fullWidth / 3,
           h: 66,
           radius: 5,
-          text_size: 24,
-          color: 0xffffff,
-          press_color: 0x555555,
-          normal_color: 0x3d3d3d,
+          text_size: titleFont,
+          color: lightText,
+          press_color: lightBG,
+          normal_color: btnPress,
           click_func: () => { backSpace() }
         })
 
@@ -2300,8 +2330,8 @@ try {
 
         function goback() { //返回上一层
           if (pages.length > 1) {
-            var p = pages.pop()
-            if(p == 'edit'){
+            var page = pages.pop()
+            if (page == 'edit'){
               setGroupVisible(inputGroup, false)
               if(inputTarget == 'wechat'){
                 wechatCode = inputStr
@@ -2313,7 +2343,7 @@ try {
               }
               setMaxBright()
             }
-            if(p == 'app1' || p == 'app2'){
+            if (page == 'app1' || page == 'app2'){
               resetBright()
             }
           }
@@ -2322,16 +2352,16 @@ try {
             return
           }
           var ui = views.pop();
-          if (ui.type == 'GROUP') {
+          //if (ui.type == 'GROUP') {
             setGroupVisible(ui, false)
-          }
+          //}
         }
 
         function setGroupVisible(ui, v) {
           ui.setProperty(hmUI.prop.VISIBLE, v);
-          ui.subWds.forEach(element => {
-            element.setProperty(hmUI.prop.VISIBLE, v);
-          });
+          // ui.subWds.forEach(element => {
+          //   element.setProperty(hmUI.prop.VISIBLE, v);
+          // });
         }
 
         let isAutoBright
@@ -2386,10 +2416,8 @@ try {
         backBUtton.setProperty(hmUI.prop.VISIBLE, false);
         backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) {goback();})
 
-        //获取初始亮度
-        try{
-          var originBright = hmSetting.getBrightness();
-        }catch(e){}
+        //updateWechatCode()
+        //updateAlipayCode()
 
         var ks = {
           '0200': ' ',
@@ -2497,12 +2525,9 @@ try {
       },
       onDestory() {
         p.log("index page.js on destory invoke");
-        //clearInterval(mainTimer)
         try {
           timer.stopTimer(mainTimer)
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
     });
   })();
