@@ -1064,7 +1064,7 @@ var QRCode;
     var result = '';
     var nCount = this._oQRCode.getModuleCount();
     console.log("nCount:" + nCount + '\n')
-    
+
 
     for (var row = 0; row < nCount; row++) {
       for (var col = 0; col < nCount; col++) {
@@ -1093,22 +1093,22 @@ try {
       {
         px: e
       } =
-      (new DeviceRuntimeCore.WidgetFactory(
+        (new DeviceRuntimeCore.WidgetFactory(
           new DeviceRuntimeCore.HmDomApi(n, g)
         ),
-        n.app.__globals__)
+          n.app.__globals__)
     let p
-    try{
+    try {
       p = DeviceRuntimeCore.HmLogger.getLogger("watchface6");
-    }catch(e){}
-     
+    } catch (e) { }
+
     //资源链接------------------------
     const moonArray = ['m/1.png', 'm/2.png', 'm/3.png', 'm/4.png', 'm/5.png', 'm/6.png', 'm/7.png', 'm/8.png', 'm/9.png', 'm/10.png', 'm/11.png', 'm/12.png', 'm/13.png', 'm/14.png',
       'm/15.png', 'm/16.png', 'm/17.png', 'm/18.png', 'm/19.png', 'm/20.png', 'm/21.png', 'm/22.png', 'm/23.png', 'm/24.png', 'm/25.png', 'm/26.png', 'm/27.png', 'm/28.png', 'm/29.png', 'm/30.png'
     ]
     const mbg = ['mo/1.png', 'mo/2.png', 'mo/3.png', 'mo/4.png', 'mo/5.png', 'mo/6.png', 'mo/7.png', 'mo/8.png']
     const mf = ['mo/1f.png', 'mo/2f.png', 'mo/3f.png', 'mo/4f.png', 'mo/5f.png', 'mo/6f.png', 'mo/7f.png', 'mo/8f.png']
-    
+
     let mainTimer
 
     const topBtnX = 55;
@@ -1133,7 +1133,48 @@ try {
     const secondText = 0xa5a5a5;
     const orange = 0xfc512d;
     const btnPress = 0x555555;
-    
+
+    let month_array = null// = ["14.png", "15.png", "16.png", "17.png", "18.png", "19.png", "20.png", "21.png", "22.png", "23.png"]
+    let hour_array = null// = ["3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png"]
+    let week_array = null// = ["25.png", "26.png", "27.png", "28.png", "29.png", "30.png", "31.png"]
+
+    let bat = null
+    let bat_level = null
+
+    function range(start, end, step = 1) {
+      if (arguments.length === 1) {
+        end = start
+        start = 0
+        step = 1
+      }
+
+      const result = []
+      for (let i = start; i < end; i += step) {
+        result.push(i)
+      }
+
+      return result
+    }
+
+    month_array = range(10).map((v) => {
+      return `date/${v}.png`
+    })
+
+    hour_array = range(10).map((v) => {
+      return `time/${v}.png`
+    })
+
+    week_array = range(7).map((v) => {
+      return `week/${v}.png`
+    })
+
+    bat = range(10).map((v) => {
+      return `bat/${v}.png`
+    })
+
+    bat_level = range(11).map((v) => {
+      return `batlevel/${v}.png`
+    })
 
     function showToast(t) {
       try {
@@ -1144,150 +1185,224 @@ try {
     }
     g.module = DeviceRuntimeCore.WatchFace({
       init_view() {
-        var bg
-        var fg
-        var moonface
-        bg = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
-            x: 0,
-            y: 0,
-            image_array: mbg,
-            image_length: mbg.length,
-            level: 1,
-            show_level: hmUI.show_level.ONLY_NORMAL
-          }),
-          moonface = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
-            x: 157,
-            y: 150,
-            image_array: moonArray,
-            image_length: moonArray.length,
-            level: 1,
-            show_level: hmUI.show_level.ONLY_NORMAL
-          }),
 
-          hmUI.createWidget(hmUI.widget.IMG_TIME, {
-            hour_zero: 0,
-            hour_startX: 18,
-            hour_startY: 77,
-            hour_array: ["3.png","4.png","5.png","6.png","7.png","8.png","9.png","10.png","11.png","12.png"],
-            hour_space: 3,
-            hour_unit_sc: "13.png",
-            hour_unit_tc: "13.png",
-            hour_unit_en: "13.png",
-            hour_align: hmUI.align.RIGHT,
-            minute_zero: 1,
-            minute_array: ["3.png","4.png","5.png","6.png","7.png","8.png","9.png","10.png","11.png","12.png"],
-            minute_follow: 1,
-            show_level: hmUI.show_level.ONLY_NORMAL
-          }),
-          hmUI.createWidget(hmUI.widget.IMG_DATE, {
-            month_startX: 15,
-            month_startY: 150,
-            month_sc_array: ["14.png","15.png","16.png","17.png","18.png","19.png","20.png","21.png","22.png","23.png"],
-            month_tc_array: ["14.png","15.png","16.png","17.png","18.png","19.png","20.png","21.png","22.png","23.png"],
-            month_en_array: ["14.png", "15.png", "16.png", "17.png", "18.png", "19.png", "20.png", "21.png", "22.png", "23.png"],
-            month_unit_sc: "24.png",
-            month_unit_tc: "24.png",
-            month_unit_en: "24.png",
-            month_align: hmUI.align.RIGHT,
-            month_zero: 0,
-            month_follow: 0,
-            month_space: 1,
-            month_is_character: !1,
-            day_sc_array: ["14.png","15.png","16.png","17.png","18.png","19.png","20.png","21.png","22.png","23.png"],
-            day_tc_array: ["14.png", "15.png", "16.png", "17.png", "18.png", "19.png", "20.png", "21.png", "22.png", "23.png"],
-            day_en_array: ["14.png", "15.png", "16.png", "17.png", "18.png", "19.png", "20.png", "21.png", "22.png", "23.png"],
-            day_zero: 1,
-            day_follow: 1,
-            day_is_character: !1,
-            show_level: hmUI.show_level.ONLY_NORMAL
-          }),
-          hmUI.createWidget(hmUI.widget.IMG_WEEK, {
-            x: 102,
-            y: 190,
-            week_en: ["25.png","26.png","27.png","28.png","29.png","30.png","31.png"],
-            week_tc: ["25.png", "26.png", "27.png", "28.png", "29.png", "30.png", "31.png"],
-            week_sc: ["25.png", "26.png", "27.png", "28.png", "29.png", "30.png", "31.png"],
-            show_level: hmUI.show_level.ONLY_NORMAL
-          })
-        fg = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
-            x: 0,
-            y: 182,
-            image_array: mf,
-            image_length: mf.length,
-            level: 1,
-            show_level: hmUI.show_level.ONLY_NORMAL
-          }),
-          hmUI.createWidget(hmUI.widget.IMG, {
-            x: 0,
-            y: 0,
-            w: 192,
-            h: 490,
-            src: "33.png",
-            show_level: hmUI.show_level.ONLY_AOD
-          }),
-          hmUI.createWidget(hmUI.widget.TIME_POINTER, {
-            hour_centerX: 96,
-            hour_centerY: 245,
-            hour_posX: 12,
-            hour_posY: 68,
-            hour_path: "34.png",
-            hour_cover_path: "",
-            hour_cover_x: 84,
-            hour_cover_y: 233,
-            minute_centerX: 96,
-            minute_centerY: 245,
-            minute_posX: 12,
-            minute_posY: 84,
-            minute_path: "36.png",
-            minute_cover_path: "35.png",
-            minute_cover_x: 84,
-            minute_cover_y: 233,
-            show_level: hmUI.show_level.ONLY_AOD
-          });
+        const bg = hmUI.createWidget(hmUI.widget.IMG, {
+          x: 0,
+          y: 0,
+          src: mbg[0],
+          //image_array: mbg,
+          //image_length: mbg.length,
+          //level: 1,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+        //----------------系统状态----------------------------------
+        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+          x: 10,
+          y: 65,
+          type: hmUI.system_status.DISCONNECT,
+          src: 'state/bluetooth.png',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+          x: 40,
+          y: 65,
+          type: hmUI.system_status.DISTURB,
+          src: 'state/disturb.png',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+          x: 70,
+          y: 65,
+          type: hmUI.system_status.LOCK,
+          src: 'state/lock.png',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
 
 
-        const jstime = hmSensor.createSensor(hmSensor.id.TIME)
-        showToast('lunar_day:' + jstime.lunar_day + '\n')
-        console.log(jstime)
-        //定时器每30分钟更新背景图和月相图
-        
-        try {
-          mainTimer = createTimer(
-            100,
-            1800000,
-            function (option) {
-              var h = Math.ceil(jstime.hour / 3) //jstime.hour
-              if (h > mbg.length) {
-                return
-              }
-              bg.setProperty(hmUI.prop.MORE, {
-                level: h - 1
-              })
-              fg.setProperty(hmUI.prop.MORE, {
-                level: h - 1
-              })
-              updateMoonFace()
-            }
-          );
-        } catch (e) {}
+        const batIcon = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
+          x: 140,
+          y: 65,
+          image_array: bat_level,
+          image_length: bat_level.length,
+          //type: Math.floor(hmUI.data_type.BATTERY / 10),
+          level: 1,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
 
-        function updateMoonFace() {
-          try {
-            var ld = jstime.lunar_day
-            if (typeof (ld) == 'undefined') {
-              return
-            }
-            moonface.setProperty(hmUI.prop.MORE, {
-              level: ld - 1
-            })
-          } catch (e) {
-            console.log('不支持农历\n')
-          }
-        }
-        //更新背景和前景图
+        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+          x: 160,
+          y: 65,
+          font_array: bat,
+          h_space: 1,
+          align_h: hmUI.align.LEFT,
+          type: hmUI.data_type.BATTERY,
+          //text: '0',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
 
-        //todo 状态显示
-        const battery = hmSensor.createSensor(hmSensor.id.BATTERY)
+
+        hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
+          x: 157,
+          y: 100,
+          image_array: moonArray,
+          image_length: moonArray.length,
+          type: hmUI.data_type.MOON,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.IMG_DATE, {
+          month_startX: 10,
+          month_startY: 100,
+          month_sc_array: month_array,
+          month_tc_array: month_array,
+          month_en_array: month_array,
+          month_unit_sc: "24.png",
+          month_unit_tc: "24.png",
+          month_unit_en: "24.png",
+          month_align: hmUI.align.LEFT,
+          month_zero: 0,
+          month_follow: 0,
+          month_space: 1,
+          month_is_character: !1,
+          day_sc_array: month_array,
+          day_tc_array: month_array,
+          day_en_array: month_array,
+          day_zero: 1,
+          day_follow: 1,
+          day_is_character: !1,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+        hmUI.createWidget(hmUI.widget.IMG_WEEK, {
+          x: 106,
+          y: 100,
+          week_en: week_array,
+          week_tc: week_array,
+          week_sc: week_array,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.IMG_TIME, {
+          hour_zero: 1,
+          hour_startX: 10,
+          hour_startY: 160,
+          hour_array: hour_array,
+          hour_space: 3,
+          // hour_unit_sc: "13.png",
+          // hour_unit_tc: "13.png",
+          // hour_unit_en: "13.png",
+          hour_align: hmUI.align.RIGHT,
+          minute_zero: 1,
+          minute_array: hour_array,
+          minute_follow: 1,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+
+        const fg = hmUI.createWidget(hmUI.widget.IMG, {
+          x: 0,
+          y: 182,
+          src: mf[0],
+          //image_array: mbg,
+          //image_length: mbg.length,
+          //level: 1,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+        hmUI.createWidget(hmUI.widget.IMG_TIME, {
+          hour_zero: 1,
+          hour_startX: 10,
+          hour_startY: 160,
+          hour_array: hour_array,
+          hour_space: 3,
+          // hour_unit_sc: "13.png",
+          // hour_unit_tc: "13.png",
+          // hour_unit_en: "13.png",
+          hour_align: hmUI.align.RIGHT,
+          minute_zero: 1,
+          minute_array: hour_array,
+          minute_startX: 0,
+          minute_startY: 490,
+          minute_follow: 0,
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+
+        //--------------------统计区
+
+        hmUI.createWidget(hmUI.widget.IMG, {
+          x: 96,
+          y: 280,
+          src: 'walk.png',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.TEXT, {
+          x: 124,
+          y: 280,
+          w: 90,
+          h: 30,
+          color: 0xffffff,
+          text_size: 28,
+          align_h: hmUI.align.LEFT,
+          align_v: hmUI.align.CENTER_V,
+          text_style: hmUI.text_style.NONE,
+          text: hmUI.data_type.STEP,
+          show_level: hmUI.show_level.ONLY_NORMAL
+          //text: '0000'
+        })
+
+
+        hmUI.createWidget(hmUI.widget.IMG, {
+          x: 96,
+          y: 240,
+          src: 'heart.png',
+          show_level: hmUI.show_level.ONLY_NORMAL
+        })
+
+        hmUI.createWidget(hmUI.widget.TEXT, {
+          x: 124,
+          y: 240,
+          w: 42,
+          h: 30,
+          color: 0xffffff,
+          text_size: 28,
+          align_h: hmUI.align.LEFR,
+          align_v: hmUI.align.CENTER_V,
+          text_style: hmUI.text_style.NONE,
+          text: hmUI.data_type.HEART,
+          show_level: hmUI.show_level.ONLY_NORMAL
+          //text: '0000'
+        })
+
+
+        hmUI.createWidget(hmUI.widget.IMG, {
+          x: 0,
+          y: 0,
+          w: 192,
+          h: 490,
+          src: "33.png",
+          show_level: hmUI.show_level.ONLY_AOD
+        })
+        hmUI.createWidget(hmUI.widget.TIME_POINTER, {
+          hour_centerX: 96,
+          hour_centerY: 245,
+          hour_posX: 12,
+          hour_posY: 68,
+          hour_path: "34.png",
+          hour_cover_path: "",
+          hour_cover_x: 84,
+          hour_cover_y: 233,
+          minute_centerX: 96,
+          minute_centerY: 245,
+          minute_posX: 12,
+          minute_posY: 84,
+          minute_path: "36.png",
+          minute_cover_path: "35.png",
+          minute_cover_x: 84,
+          minute_cover_y: 233,
+          show_level: hmUI.show_level.ONLY_AOD
+        })
 
         //---------------------------------小程序入口-------------------------------------
         //震动
@@ -1311,22 +1426,22 @@ try {
 
         function switchUI(b) {
           img_bkg.setProperty(hmUI.prop.VISIBLE, b);
-          setGroupVisible(txtGroup, !b);
+          setGroupVisible(menuGroup, !b);
           backBUtton.setProperty(hmUI.prop.VISIBLE, !b);
         }
 
         //---------------------------------菜单-------------------------------------
 
-        let txtGroup = hmUI.createWidget(hmUI.widget.GROUP, {
+        let menuGroup = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
           w: fullWidth,
           h: fullHeight
         })
 
-        setGroupVisible(txtGroup, false);
+        setGroupVisible(menuGroup, false);
 
-        txtGroup.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
+        menuGroup.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
           y: 0,
           w: fullWidth,
@@ -1335,30 +1450,62 @@ try {
         })
 
         var apps = [
-          {text:'微信收款',id:1},
-          {text: '支付宝收款', id: 2},
-          { text: '点数器', id: 3 },
+          { text: '微信收款', id: 1 },
+          { text: '支付宝收款', id: 2 },
           { text: '吃什么', id: 4 },
+          { text: '点数器', id: 3 },
+          { text: '骰子', id: 7 },
           { text: '尺子', id: 6 },
           { text: '关于', id: 5 },
         ]
 
+        let menuItems = []
+        let pageSize = 4;
+        let offset = 0;
+
         for (let i = 0; i < apps.length; i++) {
           const app = apps[i];
-          txtGroup.createWidget(hmUI.widget.BUTTON, {
+          var m = menuGroup.createWidget(hmUI.widget.BUTTON, {
             x: 5,
-            y: 70 + i * 60,
+            y: 70 + i % pageSize * 80,
             w: fullWidth - 10,
-            h: 50,
+            h: 76,
             press_color: lightBG,
             normal_color: btnPress,
             text: app['text'],
             color: lightText,
-            text_size: normalFont,
-            radius:15,
+            text_size: 28,
+            radius: 48,
             click_func: () => { openApp(app['id'],) }
           })
+          menuItems.push(m)
         }
+
+        const nextPage = menuGroup.createWidget(hmUI.widget.IMG, {
+          x: (fullWidth - iconBtnW) / 2,
+          y: bottomBtnY,
+          w: iconBtnW,
+          h: 50,
+          src: "next.png"
+        })
+
+        nextPage.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          switchMenu()
+        })
+
+
+        function switchMenu() {
+          if (offset >= menuItems.length) {
+            offset = 0
+          }
+          for (let i = 0; i < menuItems.length; i++) {
+            const item = menuItems[i];
+            item.setProperty(hmUI.prop.VISIBLE, (i >= offset && i < offset + pageSize))
+
+          }
+          offset += pageSize;
+        }
+        switchMenu()
 
         //---------------------------------微信收款-------------------------------------
 
@@ -1436,7 +1583,7 @@ try {
               text_size: 18,
             })
             return
-          } 
+          }
           textCode.setProperty(hmUI.prop.MORE, {
             x: Math.floor((fullWidth - 4) % cols / 2),
             text_size: Math.floor((fullWidth - 4) / cols),
@@ -1446,7 +1593,7 @@ try {
         }
 
         const editWechat = app1Group.createWidget(hmUI.widget.IMG, {
-          x: (fullWidth - iconBtnW) /2,
+          x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
           w: iconBtnW,
           h: 50,
@@ -1570,7 +1717,7 @@ try {
         //     text: str
         //   })
         // }
-        
+
 
         const editAlipay = app2Group.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
@@ -1636,8 +1783,8 @@ try {
           x: 45,
           y: 60,
           w: 102,
-          h:50,
-          text:'归零',
+          h: 50,
+          text: '归零',
           press_color: lightBG,
           normal_color: btnPress,
           color: lightText,
@@ -1654,7 +1801,7 @@ try {
           }
         })
 
-        const switchVibrate =  app3Group.createWidget(hmUI.widget.BUTTON, {
+        const switchVibrate = app3Group.createWidget(hmUI.widget.BUTTON, {
           x: 45,
           y: 120,
           w: 102,
@@ -1708,7 +1855,7 @@ try {
           text: "点击+1"
         })
 
-        
+
 
         addCount.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           if (pages[pages.length - 1] != "app3") {
@@ -1761,27 +1908,27 @@ try {
           x: 5,
           y: 130,
           w: fullWidth - 10,
-          h: 50,
-          radius: 15,
+          h: 76,
+          radius: 38,
           press_color: lightBG,
           normal_color: btnPress,
           text: '快餐',
           color: lightText,
-          text_size: normalFont,
+          text_size: 28,
           click_func: () => { gotoFastfood() }
         })
 
         app4Group.createWidget(hmUI.widget.BUTTON, {
           x: 5,
           y: 250,
-          w: fullWidth -10,
-          h: 50,
-          radius:15,
+          w: fullWidth - 10,
+          h: 76,
+          radius: 38,
           press_color: lightBG,
           normal_color: btnPress,
           text: '正餐',
           color: lightText,
-          text_size: normalFont,
+          text_size: 28,
           click_func: () => { gotoDinner() }
         })
 
@@ -1852,7 +1999,7 @@ try {
 
         let fastfoodIndex = 0;
 
-        const refreshFastfood = fastfoodGroup.createWidget(hmUI.widget.IMG, { //小程序图标
+        const refreshFastfood = fastfoodGroup.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
           w: iconBtnW,
@@ -1952,8 +2099,6 @@ try {
             updateDinnerCount()
           }
         })
-        
-
 
         var dinnerIndex = 1;
         const refreshDinner = dinnerGroup.createWidget(hmUI.widget.IMG, { //小程序图标
@@ -2051,7 +2196,7 @@ try {
           text_style: hmUI.text_style.WRAP
         })
 
-       
+
 
         const logNav = app5Group.createWidget(hmUI.widget.IMG, {
           x: 5,
@@ -2111,10 +2256,10 @@ try {
           })
         }
 
-        function pushLog(log){
+        function pushLog(log) {
           logStr += log
-          if(logStr.length > 150){
-            logStr = logStr.substring(logStr.length - 150,150)
+          if (logStr.length > 150) {
+            logStr = logStr.substring(logStr.length - 150, 150)
           }
           logs.setProperty(hmUI.prop.MORE, {
             text: logStr
@@ -2140,19 +2285,275 @@ try {
 
         setGroupVisible(app6Group, false)
 
+
+        //--------------------------------骰子-------------------------------------
+        let game = 0;
+        let touCount = 4;
+        let tou1 = 0;
+        let tou2 = 0;
+        let tou3 = 0;
+        let tou4 = 0;
+
+        let app7Group = hmUI.createWidget(hmUI.widget.GROUP, {
+          x: 0,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight
+        })
+        setGroupVisible(app7Group, false)
+
+        app7Group.createWidget(hmUI.widget.FILL_RECT, {
+          x: 0,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight,
+          color: darkBG
+        })
+
+        const touStat = app7Group.createWidget(hmUI.widget.BUTTON, {
+          x: 21,
+          y: 60,
+          w: 150,
+          h: 80,
+          text: '第1轮\n总点数0',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
+          radius: 15,
+          click_func: () => {
+            goin(app7EditGroup)
+            pages.push('rules')
+          }
+        })
+
+        const tou1Img = app7Group.createWidget(hmUI.widget.IMG, {
+          x: 10,
+          y: 150,
+          w: 81,
+          h: 81,
+          src: 'tou/6.png'
+        })
+
+        const tou2Img = app7Group.createWidget(hmUI.widget.IMG, {
+          x: 101,
+          y: 150,
+          w: 81,
+          h: 81,
+          src: 'tou/6.png'
+        })
+
+        const tou3Img = app7Group.createWidget(hmUI.widget.IMG, {
+          x: 10,
+          y: 241,
+          w: 81,
+          h: 81,
+          src: 'tou/6.png'
+        })
+
+        const tou4Img = app7Group.createWidget(hmUI.widget.IMG, {
+          x: 101,
+          y: 241,
+          w: 81,
+          h: 81,
+          src: 'tou/6.png'
+        })
+
+        const refreshTou = app7Group.createWidget(hmUI.widget.IMG, {
+          x: (fullWidth - iconBtnW) / 2,
+          y: bottomBtnY,
+          w: iconBtnW,
+          h: 50,
+          src: "refresh.png"
+        })
+
+        refreshTou.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          var t;
+          if (touCount > 0) {
+            tou1 = Math.round(Math.random() * 5)
+            t = tou1 + 1
+            tou1Img.setProperty(hmUI.prop.MORE, {
+              src: 'tou/' + t + '.png'
+            })
+          }
+          if (touCount > 1) {
+            tou2 = Math.round(Math.random() * 5)
+            t = tou2 + 1
+            tou2Img.setProperty(hmUI.prop.MORE, {
+              src: 'tou/' + t + '.png'
+            })
+          }
+          if (touCount > 2) {
+            tou3 = Math.round(Math.random() * 5)
+            t = tou3 + 1
+            tou3Img.setProperty(hmUI.prop.MORE, {
+              src: 'tou/' + t + '.png'
+            })
+          }
+          if (touCount > 3) {
+            tou4 = Math.round(Math.random() * 5)
+            t = tou4 + 1
+            tou4Img.setProperty(hmUI.prop.MORE, {
+              src: 'tou/' + t + '.png'
+            })
+          }
+          updateGameStat()
+        })
+
+
+        let app7EditGroup = hmUI.createWidget(hmUI.widget.GROUP, {
+          x: 0,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight
+        })
+        setGroupVisible(app7EditGroup, false)
+
+        app7EditGroup.createWidget(hmUI.widget.FILL_RECT, {
+          x: 0,
+          y: 0,
+          w: fullWidth,
+          h: fullHeight,
+          color: darkBG
+        })
+
+        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 21,
+          y: 60,
+          w: 150,
+          h: 80,
+          text: '重置游戏',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
+          radius: 15,
+          click_func: () => {
+            resetGame()
+            showToast('重置完毕')
+          }
+        })
+
+        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 21,
+          y: 60,
+          w: 150,
+          h: 75,
+          text: '重置游戏',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
+          radius: 15,
+          click_func: () => {
+            resetGame()
+            showToast('重置完毕')
+          }
+        })
+
+        const ruleStr = app7EditGroup.createWidget(hmUI.widget.TEXT, {
+          x: 21,
+          y: 150,
+          w: 150,
+          h: 40,
+          text: '骰子数量：4',
+          color: lightText,
+          text_size: normalFont
+        })
+
+        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 10,
+          y: 240,
+          w: 81,
+          h: 75,
+          text: '-1',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
+          radius: 15,
+          click_func: () => {
+            changeTouCount(-1)
+          }
+        })
+
+        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
+          x: 101,
+          y: 240,
+          w: 81,
+          h: 75,
+          text: '+1',
+          press_color: lightBG,
+          normal_color: btnPress,
+          color: lightText,
+          text_size: normalFont,
+          radius: 15,
+          click_func: () => {
+            changeTouCount(1)
+          }
+        })
+
+        function changeTouCount(n) {
+          touCount += n
+          if (touCount < 2) {
+            touCount = 1;
+          }
+          if (touCount > 3) {
+            touCount = 4
+          }
+          updateTouCount()
+          ruleStr.setProperty(hmUI.prop.MORE, {
+            text: '骰子数量：' + touCount
+          })
+        }
+
+
+        function updateTouCount() {
+          tou1Img.setProperty(hmUI.prop.VISIBLE, touCount > 0)
+          tou2Img.setProperty(hmUI.prop.VISIBLE, touCount > 1)
+          tou3Img.setProperty(hmUI.prop.VISIBLE, touCount > 2)
+          tou4Img.setProperty(hmUI.prop.VISIBLE, touCount > 3)
+        }
+
+        function updateGameStat() {
+          game++;
+          var total = 0;
+          total += (touCount > 0 ? (tou1 + 1) : 0)
+          total += (touCount > 1 ? (tou2 + 1) : 0)
+          total += (touCount > 2 ? (tou3 + 1) : 0)
+          total += (touCount > 3 ? (tou4 + 1) : 0)
+          touStat.setProperty(hmUI.prop.MORE, {
+            x: 21,
+            y: 60,
+            w: 150,
+            h: 80,
+            text: '第' + game + '轮\n总点数' + total,
+          })
+        }
+
+        function resetGame() {
+          game = 0;
+          tou1 = 0;
+          tou2 = 0;
+          tou3 = 0;
+          tou4 = 0;
+          updateGameStat()
+        }
+
+
         //--------------------------------输入框-------------------------------------
         var inputTarget = null;
         var inputStr = '';
         var inputCode = '';
 
-        let inputGroup = hmUI.createWidget(hmUI.widget.GROUP,{
-          x:0,
-          y:0,
+        let inputGroup = hmUI.createWidget(hmUI.widget.GROUP, {
+          x: 0,
+          y: 0,
           w: fullWidth,
-          h:fullHeight
+          h: fullHeight
         })
-        
-        
+
+
 
         inputGroup.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
@@ -2187,7 +2588,7 @@ try {
           text_style: hmUI.text_style.WRAP
         })
 
-        
+
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
           x: 2,
@@ -2195,12 +2596,12 @@ try {
           text: '0',
           w: (fullWidth - 6) / 2,
           h: 66,
-          radius:5,
+          radius: 5,
           text_size: titleFont,
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('0')}
+          click_func: () => { inputCodeX('0') }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2210,11 +2611,11 @@ try {
           w: (fullWidth - 6) / 2,
           h: 66,
           radius: 5,
-          text_size:titleFont,
+          text_size: titleFont,
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('1')}
+          click_func: () => { inputCodeX('1') }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2259,13 +2660,13 @@ try {
           click_func: () => { backSpace() }
         })
 
-        function inputCodeX(n){
-          if(inputCode.length > 3){
+        function inputCodeX(n) {
+          if (inputCode.length > 3) {
             inputCode = '';
-          }else{
+          } else {
             inputCode += '' + n;
-            if(inputCode.length == 4){
-              if (ks[inputCode] != undefined){
+            if (inputCode.length == 4) {
+              if (ks[inputCode] != undefined) {
                 inputStr += ks[inputCode];
                 updateInputBox()
               }
@@ -2277,20 +2678,20 @@ try {
           })
         }
 
-        function updateInputBox(){
+        function updateInputBox() {
           inputBox.setProperty(hmUI.prop.MORE, {
             text: inputStr
           })
         }
 
-        function backSpace(){
-          if(inputCode.length > 0){
-            inputCode = inputCode.substring(0,inputCode.length-1)
+        function backSpace() {
+          if (inputCode.length > 0) {
+            inputCode = inputCode.substring(0, inputCode.length - 1)
             inputCodeBox.setProperty(hmUI.prop.MORE, {
               text: inputCode
             })
-          }else{
-            if(inputStr.length > 0){
+          } else {
+            if (inputStr.length > 0) {
               inputStr = inputStr.substring(0, inputStr.length - 1)
               updateInputBox()
             }
@@ -2301,9 +2702,9 @@ try {
 
         //--------------------------------通用功能-------------------------------------
 
-        function openApp(i){
-          if (pages[pages.length - 1] != "menu") {return}
-          switch(i){
+        function openApp(i) {
+          if (pages[pages.length - 1] != "menu") { return }
+          switch (i) {
             case 1:
               goin(app1Group)
               break;
@@ -2322,6 +2723,9 @@ try {
             case 6:
               goin(app6Group)
               break;
+            case 7:
+              goin(app7Group)
+              break;
             default:
               return
           }
@@ -2331,9 +2735,9 @@ try {
         function goback() { //返回上一层
           if (pages.length > 1) {
             var page = pages.pop()
-            if (page == 'edit'){
+            if (page == 'edit') {
               setGroupVisible(inputGroup, false)
-              if(inputTarget == 'wechat'){
+              if (inputTarget == 'wechat') {
                 wechatCode = inputStr
                 updateWechatCode()
               }
@@ -2343,7 +2747,7 @@ try {
               }
               setMaxBright()
             }
-            if (page == 'app1' || page == 'app2'){
+            if (page == 'app1' || page == 'app2') {
               resetBright()
             }
           }
@@ -2353,7 +2757,7 @@ try {
           }
           var ui = views.pop();
           //if (ui.type == 'GROUP') {
-            setGroupVisible(ui, false)
+          setGroupVisible(ui, false)
           //}
         }
 
@@ -2369,15 +2773,15 @@ try {
 
         function goin(ui) {
           views.push(ui);
-          if (ui == app1Group || ui == app2Group ){
+          if (ui == app1Group || ui == app2Group) {
             checkBright()
             setMaxBright()
           }
           setGroupVisible(ui, true);
         }
-        
+
         //检查亮度设置
-        function checkBright(){
+        function checkBright() {
           try {
             isAutoBright = hmSetting.getScreenAutoBright()
             if (!isAutoBright) {
@@ -2386,7 +2790,7 @@ try {
           } catch (e) { }
         }
 
-        function setMaxBright(){
+        function setMaxBright() {
           try {
             hmSetting.setScreenAutoBright(false)
             hmSetting.setBrightness(100)
@@ -2396,11 +2800,11 @@ try {
         }
 
         //重置亮度
-        function resetBright(){
+        function resetBright() {
           try {
-            if(isAutoBright){
+            if (isAutoBright) {
               hmSetting.setScreenAutoBright()
-            }else{
+            } else {
               hmSetting.setBrightness(bright)
             }
           } catch (e) { }
@@ -2414,10 +2818,77 @@ try {
           src: "back.png",
         })
         backBUtton.setProperty(hmUI.prop.VISIBLE, false);
-        backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) {goback();})
+        backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) { goback(); })
 
         //updateWechatCode()
         //updateAlipayCode()
+
+        const battery = hmSensor.createSensor(hmSensor.id.BATTERY)
+        const jstime = hmSensor.createSensor(hmSensor.id.TIME)
+
+
+        function updateBG() {
+          var h = Math.ceil(jstime.hour / 3)
+          if (h > mbg.length - 1) {
+            return
+          }
+          bg.setProperty(hmUI.prop.MORE, {
+            src: mbg[h]
+          })
+          fg.setProperty(hmUI.prop.MORE, {
+            src: mf[h]
+          })
+        }
+
+        updateBG()
+
+        battery.addEventListener(hmSensor.event.CHANGE, function () {
+          updateBG()
+          batIcon.setProperty(hmUI.prop.MORE, {
+            level: Math.floor(battery.current / 10)
+          })
+        })
+
+
+
+
+        // function startTime(){
+        //   try {
+        //     mainTimer = createTimer(
+        //       500,
+        //       1000, //1800000
+        //       function (option) {
+        //         var h = Math.ceil((option.s) / 3) //jstime.hour
+        //         showToast("h:"+h)
+        //         p.log("h:" + h)
+        //         if (h > mbg.length - 1) {
+        //           return
+        //         }
+        //         bg.setProperty(hmUI.prop.MORE, {
+        //           type: h - 1
+        //         })
+        //         fg.setProperty(hmUI.prop.MORE, {
+        //           level: h - 1
+        //         })
+        //         //updateMoonFace()
+        //       },
+        //       { hour: jstime.hour,s:jstime.second }
+        //     );
+        //   } catch (e) {
+        //     p.log(e)
+        //   }
+        // }
+
+        // hmUI.createWidget(hmUI.widget.WIDGET_DELEGATE, {
+        //   resume_call: function () {
+        //     startTime()
+        //   },
+        //   pause_call: function () {
+        //     timer.stopTimer(mainTimer)
+        //     p.log('ui pause')
+        //   },
+        // })
+
 
         var ks = {
           '0200': ' ',
@@ -2518,19 +2989,22 @@ try {
         }
       },
       onInit() {
+        this.init_view()
         p.log("index page.js on init invoke");
       },
       build() {
-        this.init_view(), p.log("index page.js on ready invoke");
+        this.init_view()
+        p.log("index page.js on ready invoke");
       },
       onDestory() {
         p.log("index page.js on destory invoke");
         try {
           timer.stopTimer(mainTimer)
-        } catch (e) {}
+        } catch (e) { }
       }
     });
   })();
 } catch (n) {
   console.log(n);
+  p.og(n)
 }
