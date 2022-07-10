@@ -1134,9 +1134,9 @@ try {
     const orange = 0xfc512d;
     const btnPress = 0x555555;
 
-    let month_array = null// = ["14.png", "15.png", "16.png", "17.png", "18.png", "19.png", "20.png", "21.png", "22.png", "23.png"]
-    let hour_array = null// = ["3.png", "4.png", "5.png", "6.png", "7.png", "8.png", "9.png", "10.png", "11.png", "12.png"]
-    let week_array = null// = ["25.png", "26.png", "27.png", "28.png", "29.png", "30.png", "31.png"]
+    let month_array = null
+    let hour_array = null
+    let week_array = null
 
     let bat = null
     let bat_level = null
@@ -1165,8 +1165,10 @@ try {
     })
 
     week_array = range(7).map((v) => {
-      return `week/${v}.png`
+      return `week/${v + 1}.png`
     })
+
+    console.log(week_array)
 
     bat = range(10).map((v) => {
       return `bat/${v}.png`
@@ -1227,7 +1229,7 @@ try {
           image_array: bat_level,
           image_length: bat_level.length,
           //type: Math.floor(hmUI.data_type.BATTERY / 10),
-          level: 1,
+          level: 10,
           show_level: hmUI.show_level.ONLY_NORMAL
         })
 
@@ -1243,12 +1245,13 @@ try {
         })
 
 
-        hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
+        const moonFace = hmUI.createWidget(hmUI.widget.IMG, {
           x: 157,
           y: 100,
-          image_array: moonArray,
-          image_length: moonArray.length,
-          type: hmUI.data_type.MOON,
+          src: moonArray[0],
+          //image_array: moonArray,
+          //image_length: moonArray.length,
+          //type: hmUI.data_type.MOON,
           show_level: hmUI.show_level.ONLY_NORMAL
         })
 
@@ -1274,6 +1277,7 @@ try {
           day_is_character: !1,
           show_level: hmUI.show_level.ONLY_NORMAL
         })
+
         hmUI.createWidget(hmUI.widget.IMG_WEEK, {
           x: 106,
           y: 100,
@@ -1331,48 +1335,38 @@ try {
         //--------------------统计区
 
         hmUI.createWidget(hmUI.widget.IMG, {
-          x: 96,
+          x: 76,
           y: 280,
           src: 'walk.png',
           show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.TEXT, {
-          x: 124,
+        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+          x: 104,
           y: 280,
-          w: 90,
-          h: 30,
-          color: 0xffffff,
-          text_size: 28,
+          type: hmUI.data_type.STEP,
+          font_array: month_array,
+          h_space: 1,
           align_h: hmUI.align.LEFT,
-          align_v: hmUI.align.CENTER_V,
-          text_style: hmUI.text_style.NONE,
-          text: hmUI.data_type.STEP,
           show_level: hmUI.show_level.ONLY_NORMAL
-          //text: '0000'
         })
 
 
         hmUI.createWidget(hmUI.widget.IMG, {
-          x: 96,
+          x: 76,
           y: 240,
           src: 'heart.png',
           show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.TEXT, {
-          x: 124,
+        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+          x: 104,
           y: 240,
-          w: 42,
-          h: 30,
-          color: 0xffffff,
-          text_size: 28,
-          align_h: hmUI.align.LEFR,
-          align_v: hmUI.align.CENTER_V,
-          text_style: hmUI.text_style.NONE,
-          text: hmUI.data_type.HEART,
+          type: hmUI.data_type.HEART,
+          font_array: month_array,
+          h_space: 1,
+          align_h: hmUI.align.LEFT,
           show_level: hmUI.show_level.ONLY_NORMAL
-          //text: '0000'
         })
 
 
@@ -1806,7 +1800,7 @@ try {
           y: 120,
           w: 102,
           h: 50,
-          text: '震动',
+          text: '震动开',
           press_color: lightBG,
           normal_color: btnPress,
           color: lightText,
@@ -1817,6 +1811,13 @@ try {
               return
             }
             doVibrate = !doVibrate;
+            switchVibrate.setProperty(hmUI.prop.MORE, {
+              text: '震动' + (doVibrate ? '开' : '关'),
+              x: 45,
+              y: 120,
+              w: 102,
+              h: 50,
+            })
           }
         })
 
@@ -2838,6 +2839,10 @@ try {
           fg.setProperty(hmUI.prop.MORE, {
             src: mf[h]
           })
+          //更新月相
+          moonFace.setProperty(hmUI.prop.MORE,{
+            src: moonArray[jstime.lunar_day]
+          })
         }
 
         updateBG()
@@ -2845,6 +2850,8 @@ try {
         battery.addEventListener(hmSensor.event.CHANGE, function () {
           updateBG()
           batIcon.setProperty(hmUI.prop.MORE, {
+            x: 140,
+            y: 65,
             level: Math.floor(battery.current / 10)
           })
         })

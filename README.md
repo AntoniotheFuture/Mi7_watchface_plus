@@ -148,3 +148,6 @@ https://github.com/davidshimjs/qrcodejs
 
 ## 视频演示
 将会发布在B站
+
+## 其它说明
+部分美术资源来自小米表盘商城，如有侵权请联系我删除。
