@@ -1,1115 +1,39 @@
-//------------------------qrcode 相关代码开始------------------------
-/**
- * @fileoverview
- * - Using the 'QRCode for Javascript library'
- * - Fixed dataset of 'QRCode for Javascript library' for support full-spec.
- * - this library has no dependencies.
- * 
- * @author davidshimjs
- * @see <a href="http://www.d-project.com/" target="_blank">http://www.d-project.com/</a>
- * @see <a href="http://jeromeetienne.github.com/jquery-qrcode/" target="_blank">http://jeromeetienne.github.com/jquery-qrcode/</a>
- */
-var QRCode;
-
-(function () {
-  //---------------------------------------------------------------------
-  // QRCode for JavaScript
-  //
-  // Copyright (c) 2009 Kazuhiko Arase
-  //
-  // URL: http://www.d-project.com/
-  //
-  // Licensed under the MIT license:
-  //   http://www.opensource.org/licenses/mit-license.php
-  //
-  // The word "QR Code" is registered trademark of 
-  // DENSO WAVE INCORPORATED
-  //   http://www.denso-wave.com/qrcode/faqpatent-e.html
-  //
-  //---------------------------------------------------------------------
-  function QR8bitByte(data) {
-    this.mode = QRMode.MODE_8BIT_BYTE;
-    this.data = data;
-    this.parsedData = [];
-
-    // Added to support UTF-8 Characters
-    for (var i = 0, l = this.data.length; i < l; i++) {
-      var byteArray = [];
-      var code = this.data.charCodeAt(i);
-
-      if (code > 0x10000) {
-        byteArray[0] = 0xF0 | ((code & 0x1C0000) >>> 18);
-        byteArray[1] = 0x80 | ((code & 0x3F000) >>> 12);
-        byteArray[2] = 0x80 | ((code & 0xFC0) >>> 6);
-        byteArray[3] = 0x80 | (code & 0x3F);
-      } else if (code > 0x800) {
-        byteArray[0] = 0xE0 | ((code & 0xF000) >>> 12);
-        byteArray[1] = 0x80 | ((code & 0xFC0) >>> 6);
-        byteArray[2] = 0x80 | (code & 0x3F);
-      } else if (code > 0x80) {
-        byteArray[0] = 0xC0 | ((code & 0x7C0) >>> 6);
-        byteArray[1] = 0x80 | (code & 0x3F);
-      } else {
-        byteArray[0] = code;
-      }
-
-      this.parsedData.push(byteArray);
-    }
-
-    this.parsedData = Array.prototype.concat.apply([], this.parsedData);
-
-    if (this.parsedData.length != this.data.length) {
-      this.parsedData.unshift(191);
-      this.parsedData.unshift(187);
-      this.parsedData.unshift(239);
-    }
-  }
-
-  QR8bitByte.prototype = {
-    getLength: function (buffer) {
-      return this.parsedData.length;
-    },
-    write: function (buffer) {
-      for (var i = 0, l = this.parsedData.length; i < l; i++) {
-        buffer.put(this.parsedData[i], 8);
-      }
-    }
-  };
-
-  function QRCodeModel(typeNumber, errorCorrectLevel) {
-    this.typeNumber = typeNumber;
-    this.errorCorrectLevel = errorCorrectLevel;
-    this.modules = null;
-    this.moduleCount = 0;
-    this.dataCache = null;
-    this.dataList = [];
-  }
-
-  QRCodeModel.prototype = {
-    addData: function (data) {
-      var newData = new QR8bitByte(data);
-      this.dataList.push(newData);
-      this.dataCache = null;
-    },
-    isDark: function (row, col) {
-      if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
-        throw new Error(row + "," + col);
-      }
-      return this.modules[row][col];
-    },
-    getModuleCount: function () {
-      return this.moduleCount;
-    },
-    make: function () {
-      this.makeImpl(false, this.getBestMaskPattern());
-    },
-    makeImpl: function (test, maskPattern) {
-      this.moduleCount = this.typeNumber * 4 + 17;
-      this.modules = new Array(this.moduleCount);
-      for (var row = 0; row < this.moduleCount; row++) {
-        this.modules[row] = new Array(this.moduleCount);
-        for (var col = 0; col < this.moduleCount; col++) {
-          this.modules[row][col] = null;
-        }
-      }
-      this.setupPositionProbePattern(0, 0);
-      this.setupPositionProbePattern(this.moduleCount - 7, 0);
-      this.setupPositionProbePattern(0, this.moduleCount - 7);
-      this.setupPositionAdjustPattern();
-      this.setupTimingPattern();
-      this.setupTypeInfo(test, maskPattern);
-      if (this.typeNumber >= 7) {
-        this.setupTypeNumber(test);
-      }
-      if (this.dataCache == null) {
-        this.dataCache = QRCodeModel.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
-      }
-      this.mapData(this.dataCache, maskPattern);
-    },
-    setupPositionProbePattern: function (row, col) {
-      for (var r = -1; r <= 7; r++) {
-        if (row + r <= -1 || this.moduleCount <= row + r) continue;
-        for (var c = -1; c <= 7; c++) {
-          if (col + c <= -1 || this.moduleCount <= col + c) continue;
-          if ((0 <= r && r <= 6 && (c == 0 || c == 6)) || (0 <= c && c <= 6 && (r == 0 || r == 6)) || (2 <= r && r <= 4 && 2 <= c && c <= 4)) {
-            this.modules[row + r][col + c] = true;
-          } else {
-            this.modules[row + r][col + c] = false;
-          }
-        }
-      }
-    },
-    getBestMaskPattern: function () {
-      var minLostPoint = 0;
-      var pattern = 0;
-      for (var i = 0; i < 8; i++) {
-        this.makeImpl(true, i);
-        var lostPoint = QRUtil.getLostPoint(this);
-        if (i == 0 || minLostPoint > lostPoint) {
-          minLostPoint = lostPoint;
-          pattern = i;
-        }
-      }
-      return pattern;
-    },
-    createMovieClip: function (target_mc, instance_name, depth) {
-      var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
-      var cs = 1;
-      this.make();
-      for (var row = 0; row < this.modules.length; row++) {
-        var y = row * cs;
-        for (var col = 0; col < this.modules[row].length; col++) {
-          var x = col * cs;
-          var dark = this.modules[row][col];
-          if (dark) {
-            qr_mc.beginFill(0, 100);
-            qr_mc.moveTo(x, y);
-            qr_mc.lineTo(x + cs, y);
-            qr_mc.lineTo(x + cs, y + cs);
-            qr_mc.lineTo(x, y + cs);
-            qr_mc.endFill();
-          }
-        }
-      }
-      return qr_mc;
-    },
-    setupTimingPattern: function () {
-      for (var r = 8; r < this.moduleCount - 8; r++) {
-        if (this.modules[r][6] != null) {
-          continue;
-        }
-        this.modules[r][6] = (r % 2 == 0);
-      }
-      for (var c = 8; c < this.moduleCount - 8; c++) {
-        if (this.modules[6][c] != null) {
-          continue;
-        }
-        this.modules[6][c] = (c % 2 == 0);
-      }
-    },
-    setupPositionAdjustPattern: function () {
-      var pos = QRUtil.getPatternPosition(this.typeNumber);
-      for (var i = 0; i < pos.length; i++) {
-        for (var j = 0; j < pos.length; j++) {
-          var row = pos[i];
-          var col = pos[j];
-          if (this.modules[row][col] != null) {
-            continue;
-          }
-          for (var r = -2; r <= 2; r++) {
-            for (var c = -2; c <= 2; c++) {
-              if (r == -2 || r == 2 || c == -2 || c == 2 || (r == 0 && c == 0)) {
-                this.modules[row + r][col + c] = true;
-              } else {
-                this.modules[row + r][col + c] = false;
-              }
-            }
-          }
-        }
-      }
-    },
-    setupTypeNumber: function (test) {
-      var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
-      for (var i = 0; i < 18; i++) {
-        var mod = (!test && ((bits >> i) & 1) == 1);
-        this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
-      }
-      for (var i = 0; i < 18; i++) {
-        var mod = (!test && ((bits >> i) & 1) == 1);
-        this.modules[i % 3 + this.moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
-      }
-    },
-    setupTypeInfo: function (test, maskPattern) {
-      var data = (this.errorCorrectLevel << 3) | maskPattern;
-      var bits = QRUtil.getBCHTypeInfo(data);
-      for (var i = 0; i < 15; i++) {
-        var mod = (!test && ((bits >> i) & 1) == 1);
-        if (i < 6) {
-          this.modules[i][8] = mod;
-        } else if (i < 8) {
-          this.modules[i + 1][8] = mod;
-        } else {
-          this.modules[this.moduleCount - 15 + i][8] = mod;
-        }
-      }
-      for (var i = 0; i < 15; i++) {
-        var mod = (!test && ((bits >> i) & 1) == 1);
-        if (i < 8) {
-          this.modules[8][this.moduleCount - i - 1] = mod;
-        } else if (i < 9) {
-          this.modules[8][15 - i - 1 + 1] = mod;
-        } else {
-          this.modules[8][15 - i - 1] = mod;
-        }
-      }
-      this.modules[this.moduleCount - 8][8] = (!test);
-    },
-    mapData: function (data, maskPattern) {
-      var inc = -1;
-      var row = this.moduleCount - 1;
-      var bitIndex = 7;
-      var byteIndex = 0;
-      for (var col = this.moduleCount - 1; col > 0; col -= 2) {
-        if (col == 6) col--;
-        while (true) {
-          for (var c = 0; c < 2; c++) {
-            if (this.modules[row][col - c] == null) {
-              var dark = false;
-              if (byteIndex < data.length) {
-                dark = (((data[byteIndex] >>> bitIndex) & 1) == 1);
-              }
-              var mask = QRUtil.getMask(maskPattern, row, col - c);
-              if (mask) {
-                dark = !dark;
-              }
-              this.modules[row][col - c] = dark;
-              bitIndex--;
-              if (bitIndex == -1) {
-                byteIndex++;
-                bitIndex = 7;
-              }
-            }
-          }
-          row += inc;
-          if (row < 0 || this.moduleCount <= row) {
-            row -= inc;
-            inc = -inc;
-            break;
-          }
-        }
-      }
-    }
-  };
-  QRCodeModel.PAD0 = 0xEC;
-  QRCodeModel.PAD1 = 0x11;
-  QRCodeModel.createData = function (typeNumber, errorCorrectLevel, dataList) {
-    var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
-    var buffer = new QRBitBuffer();
-    for (var i = 0; i < dataList.length; i++) {
-      var data = dataList[i];
-      buffer.put(data.mode, 4);
-      buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber));
-      data.write(buffer);
-    }
-    var totalDataCount = 0;
-    for (var i = 0; i < rsBlocks.length; i++) {
-      totalDataCount += rsBlocks[i].dataCount;
-    }
-    if (buffer.getLengthInBits() > totalDataCount * 8) {
-      throw new Error("code length overflow. (" +
-        buffer.getLengthInBits() +
-        ">" +
-        totalDataCount * 8 +
-        ")");
-    }
-    if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
-      buffer.put(0, 4);
-    }
-    while (buffer.getLengthInBits() % 8 != 0) {
-      buffer.putBit(false);
-    }
-    while (true) {
-      if (buffer.getLengthInBits() >= totalDataCount * 8) {
-        break;
-      }
-      buffer.put(QRCodeModel.PAD0, 8);
-      if (buffer.getLengthInBits() >= totalDataCount * 8) {
-        break;
-      }
-      buffer.put(QRCodeModel.PAD1, 8);
-    }
-    return QRCodeModel.createBytes(buffer, rsBlocks);
-  };
-  QRCodeModel.createBytes = function (buffer, rsBlocks) {
-    var offset = 0;
-    var maxDcCount = 0;
-    var maxEcCount = 0;
-    var dcdata = new Array(rsBlocks.length);
-    var ecdata = new Array(rsBlocks.length);
-    for (var r = 0; r < rsBlocks.length; r++) {
-      var dcCount = rsBlocks[r].dataCount;
-      var ecCount = rsBlocks[r].totalCount - dcCount;
-      maxDcCount = Math.max(maxDcCount, dcCount);
-      maxEcCount = Math.max(maxEcCount, ecCount);
-      dcdata[r] = new Array(dcCount);
-      for (var i = 0; i < dcdata[r].length; i++) {
-        dcdata[r][i] = 0xff & buffer.buffer[i + offset];
-      }
-      offset += dcCount;
-      var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
-      var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
-      var modPoly = rawPoly.mod(rsPoly);
-      ecdata[r] = new Array(rsPoly.getLength() - 1);
-      for (var i = 0; i < ecdata[r].length; i++) {
-        var modIndex = i + modPoly.getLength() - ecdata[r].length;
-        ecdata[r][i] = (modIndex >= 0) ? modPoly.get(modIndex) : 0;
-      }
-    }
-    var totalCodeCount = 0;
-    for (var i = 0; i < rsBlocks.length; i++) {
-      totalCodeCount += rsBlocks[i].totalCount;
-    }
-    var data = new Array(totalCodeCount);
-    var index = 0;
-    for (var i = 0; i < maxDcCount; i++) {
-      for (var r = 0; r < rsBlocks.length; r++) {
-        if (i < dcdata[r].length) {
-          data[index++] = dcdata[r][i];
-        }
-      }
-    }
-    for (var i = 0; i < maxEcCount; i++) {
-      for (var r = 0; r < rsBlocks.length; r++) {
-        if (i < ecdata[r].length) {
-          data[index++] = ecdata[r][i];
-        }
-      }
-    }
-    return data;
-  };
-  var QRMode = {
-    MODE_NUMBER: 1 << 0,
-    MODE_ALPHA_NUM: 1 << 1,
-    MODE_8BIT_BYTE: 1 << 2,
-    MODE_KANJI: 1 << 3
-  };
-  var QRErrorCorrectLevel = {
-    L: 1,
-    M: 0,
-    Q: 3,
-    H: 2
-  };
-  var QRMaskPattern = {
-    PATTERN000: 0,
-    PATTERN001: 1,
-    PATTERN010: 2,
-    PATTERN011: 3,
-    PATTERN100: 4,
-    PATTERN101: 5,
-    PATTERN110: 6,
-    PATTERN111: 7
-  };
-  var QRUtil = {
-    PATTERN_POSITION_TABLE: [
-      [],
-      [6, 18],
-      [6, 22],
-      [6, 26],
-      [6, 30],
-      [6, 34],
-      [6, 22, 38],
-      [6, 24, 42],
-      [6, 26, 46],
-      [6, 28, 50],
-      [6, 30, 54],
-      [6, 32, 58],
-      [6, 34, 62],
-      [6, 26, 46, 66],
-      [6, 26, 48, 70],
-      [6, 26, 50, 74],
-      [6, 30, 54, 78],
-      [6, 30, 56, 82],
-      [6, 30, 58, 86],
-      [6, 34, 62, 90],
-      [6, 28, 50, 72, 94],
-      [6, 26, 50, 74, 98],
-      [6, 30, 54, 78, 102],
-      [6, 28, 54, 80, 106],
-      [6, 32, 58, 84, 110],
-      [6, 30, 58, 86, 114],
-      [6, 34, 62, 90, 118],
-      [6, 26, 50, 74, 98, 122],
-      [6, 30, 54, 78, 102, 126],
-      [6, 26, 52, 78, 104, 130],
-      [6, 30, 56, 82, 108, 134],
-      [6, 34, 60, 86, 112, 138],
-      [6, 30, 58, 86, 114, 142],
-      [6, 34, 62, 90, 118, 146],
-      [6, 30, 54, 78, 102, 126, 150],
-      [6, 24, 50, 76, 102, 128, 154],
-      [6, 28, 54, 80, 106, 132, 158],
-      [6, 32, 58, 84, 110, 136, 162],
-      [6, 26, 54, 82, 110, 138, 166],
-      [6, 30, 58, 86, 114, 142, 170]
-    ],
-    G15: (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
-    G18: (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
-    G15_MASK: (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1),
-    getBCHTypeInfo: function (data) {
-      var d = data << 10;
-      while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
-        d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15)));
-      }
-      return ((data << 10) | d) ^ QRUtil.G15_MASK;
-    },
-    getBCHTypeNumber: function (data) {
-      var d = data << 12;
-      while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
-        d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18)));
-      }
-      return (data << 12) | d;
-    },
-    getBCHDigit: function (data) {
-      var digit = 0;
-      while (data != 0) {
-        digit++;
-        data >>>= 1;
-      }
-      return digit;
-    },
-    getPatternPosition: function (typeNumber) {
-      return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
-    },
-    getMask: function (maskPattern, i, j) {
-      switch (maskPattern) {
-        case QRMaskPattern.PATTERN000:
-          return (i + j) % 2 == 0;
-        case QRMaskPattern.PATTERN001:
-          return i % 2 == 0;
-        case QRMaskPattern.PATTERN010:
-          return j % 3 == 0;
-        case QRMaskPattern.PATTERN011:
-          return (i + j) % 3 == 0;
-        case QRMaskPattern.PATTERN100:
-          return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 == 0;
-        case QRMaskPattern.PATTERN101:
-          return (i * j) % 2 + (i * j) % 3 == 0;
-        case QRMaskPattern.PATTERN110:
-          return ((i * j) % 2 + (i * j) % 3) % 2 == 0;
-        case QRMaskPattern.PATTERN111:
-          return ((i * j) % 3 + (i + j) % 2) % 2 == 0;
-        default:
-          throw new Error("bad maskPattern:" + maskPattern);
-      }
-    },
-    getErrorCorrectPolynomial: function (errorCorrectLength) {
-      var a = new QRPolynomial([1], 0);
-      for (var i = 0; i < errorCorrectLength; i++) {
-        a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0));
-      }
-      return a;
-    },
-    getLengthInBits: function (mode, type) {
-      if (1 <= type && type < 10) {
-        switch (mode) {
-          case QRMode.MODE_NUMBER:
-            return 10;
-          case QRMode.MODE_ALPHA_NUM:
-            return 9;
-          case QRMode.MODE_8BIT_BYTE:
-            return 8;
-          case QRMode.MODE_KANJI:
-            return 8;
-          default:
-            throw new Error("mode:" + mode);
-        }
-      } else if (type < 27) {
-        switch (mode) {
-          case QRMode.MODE_NUMBER:
-            return 12;
-          case QRMode.MODE_ALPHA_NUM:
-            return 11;
-          case QRMode.MODE_8BIT_BYTE:
-            return 16;
-          case QRMode.MODE_KANJI:
-            return 10;
-          default:
-            throw new Error("mode:" + mode);
-        }
-      } else if (type < 41) {
-        switch (mode) {
-          case QRMode.MODE_NUMBER:
-            return 14;
-          case QRMode.MODE_ALPHA_NUM:
-            return 13;
-          case QRMode.MODE_8BIT_BYTE:
-            return 16;
-          case QRMode.MODE_KANJI:
-            return 12;
-          default:
-            throw new Error("mode:" + mode);
-        }
-      } else {
-        throw new Error("type:" + type);
-      }
-    },
-    getLostPoint: function (qrCode) {
-      var moduleCount = qrCode.getModuleCount();
-      var lostPoint = 0;
-      for (var row = 0; row < moduleCount; row++) {
-        for (var col = 0; col < moduleCount; col++) {
-          var sameCount = 0;
-          var dark = qrCode.isDark(row, col);
-          for (var r = -1; r <= 1; r++) {
-            if (row + r < 0 || moduleCount <= row + r) {
-              continue;
-            }
-            for (var c = -1; c <= 1; c++) {
-              if (col + c < 0 || moduleCount <= col + c) {
-                continue;
-              }
-              if (r == 0 && c == 0) {
-                continue;
-              }
-              if (dark == qrCode.isDark(row + r, col + c)) {
-                sameCount++;
-              }
-            }
-          }
-          if (sameCount > 5) {
-            lostPoint += (3 + sameCount - 5);
-          }
-        }
-      }
-      for (var row = 0; row < moduleCount - 1; row++) {
-        for (var col = 0; col < moduleCount - 1; col++) {
-          var count = 0;
-          if (qrCode.isDark(row, col)) count++;
-          if (qrCode.isDark(row + 1, col)) count++;
-          if (qrCode.isDark(row, col + 1)) count++;
-          if (qrCode.isDark(row + 1, col + 1)) count++;
-          if (count == 0 || count == 4) {
-            lostPoint += 3;
-          }
-        }
-      }
-      for (var row = 0; row < moduleCount; row++) {
-        for (var col = 0; col < moduleCount - 6; col++) {
-          if (qrCode.isDark(row, col) && !qrCode.isDark(row, col + 1) && qrCode.isDark(row, col + 2) && qrCode.isDark(row, col + 3) && qrCode.isDark(row, col + 4) && !qrCode.isDark(row, col + 5) && qrCode.isDark(row, col + 6)) {
-            lostPoint += 40;
-          }
-        }
-      }
-      for (var col = 0; col < moduleCount; col++) {
-        for (var row = 0; row < moduleCount - 6; row++) {
-          if (qrCode.isDark(row, col) && !qrCode.isDark(row + 1, col) && qrCode.isDark(row + 2, col) && qrCode.isDark(row + 3, col) && qrCode.isDark(row + 4, col) && !qrCode.isDark(row + 5, col) && qrCode.isDark(row + 6, col)) {
-            lostPoint += 40;
-          }
-        }
-      }
-      var darkCount = 0;
-      for (var col = 0; col < moduleCount; col++) {
-        for (var row = 0; row < moduleCount; row++) {
-          if (qrCode.isDark(row, col)) {
-            darkCount++;
-          }
-        }
-      }
-      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
-      lostPoint += ratio * 10;
-      return lostPoint;
-    }
-  };
-  var QRMath = {
-    glog: function (n) {
-      if (n < 1) {
-        throw new Error("glog(" + n + ")");
-      }
-      return QRMath.LOG_TABLE[n];
-    },
-    gexp: function (n) {
-      while (n < 0) {
-        n += 255;
-      }
-      while (n >= 256) {
-        n -= 255;
-      }
-      return QRMath.EXP_TABLE[n];
-    },
-    EXP_TABLE: new Array(256),
-    LOG_TABLE: new Array(256)
-  };
-  for (var i = 0; i < 8; i++) {
-    QRMath.EXP_TABLE[i] = 1 << i;
-  }
-  for (var i = 8; i < 256; i++) {
-    QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4] ^ QRMath.EXP_TABLE[i - 5] ^ QRMath.EXP_TABLE[i - 6] ^ QRMath.EXP_TABLE[i - 8];
-  }
-  for (var i = 0; i < 255; i++) {
-    QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]] = i;
-  }
-
-  function QRPolynomial(num, shift) {
-    if (num.length == undefined) {
-      throw new Error(num.length + "/" + shift);
-    }
-    var offset = 0;
-    while (offset < num.length && num[offset] == 0) {
-      offset++;
-    }
-    this.num = new Array(num.length - offset + shift);
-    for (var i = 0; i < num.length - offset; i++) {
-      this.num[i] = num[i + offset];
-    }
-  }
-  QRPolynomial.prototype = {
-    get: function (index) {
-      return this.num[index];
-    },
-    getLength: function () {
-      return this.num.length;
-    },
-    multiply: function (e) {
-      var num = new Array(this.getLength() + e.getLength() - 1);
-      for (var i = 0; i < this.getLength(); i++) {
-        for (var j = 0; j < e.getLength(); j++) {
-          num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i)) + QRMath.glog(e.get(j)));
-        }
-      }
-      return new QRPolynomial(num, 0);
-    },
-    mod: function (e) {
-      if (this.getLength() - e.getLength() < 0) {
-        return this;
-      }
-      var ratio = QRMath.glog(this.get(0)) - QRMath.glog(e.get(0));
-      var num = new Array(this.getLength());
-      for (var i = 0; i < this.getLength(); i++) {
-        num[i] = this.get(i);
-      }
-      for (var i = 0; i < e.getLength(); i++) {
-        num[i] ^= QRMath.gexp(QRMath.glog(e.get(i)) + ratio);
-      }
-      return new QRPolynomial(num, 0).mod(e);
-    }
-  };
-
-  function QRRSBlock(totalCount, dataCount) {
-    this.totalCount = totalCount;
-    this.dataCount = dataCount;
-  }
-  QRRSBlock.RS_BLOCK_TABLE = [
-    [1, 26, 19],
-    [1, 26, 16],
-    [1, 26, 13],
-    [1, 26, 9],
-    [1, 44, 34],
-    [1, 44, 28],
-    [1, 44, 22],
-    [1, 44, 16],
-    [1, 70, 55],
-    [1, 70, 44],
-    [2, 35, 17],
-    [2, 35, 13],
-    [1, 100, 80],
-    [2, 50, 32],
-    [2, 50, 24],
-    [4, 25, 9],
-    [1, 134, 108],
-    [2, 67, 43],
-    [2, 33, 15, 2, 34, 16],
-    [2, 33, 11, 2, 34, 12],
-    [2, 86, 68],
-    [4, 43, 27],
-    [4, 43, 19],
-    [4, 43, 15],
-    [2, 98, 78],
-    [4, 49, 31],
-    [2, 32, 14, 4, 33, 15],
-    [4, 39, 13, 1, 40, 14],
-    [2, 121, 97],
-    [2, 60, 38, 2, 61, 39],
-    [4, 40, 18, 2, 41, 19],
-    [4, 40, 14, 2, 41, 15],
-    [2, 146, 116],
-    [3, 58, 36, 2, 59, 37],
-    [4, 36, 16, 4, 37, 17],
-    [4, 36, 12, 4, 37, 13],
-    [2, 86, 68, 2, 87, 69],
-    [4, 69, 43, 1, 70, 44],
-    [6, 43, 19, 2, 44, 20],
-    [6, 43, 15, 2, 44, 16],
-    [4, 101, 81],
-    [1, 80, 50, 4, 81, 51],
-    [4, 50, 22, 4, 51, 23],
-    [3, 36, 12, 8, 37, 13],
-    [2, 116, 92, 2, 117, 93],
-    [6, 58, 36, 2, 59, 37],
-    [4, 46, 20, 6, 47, 21],
-    [7, 42, 14, 4, 43, 15],
-    [4, 133, 107],
-    [8, 59, 37, 1, 60, 38],
-    [8, 44, 20, 4, 45, 21],
-    [12, 33, 11, 4, 34, 12],
-    [3, 145, 115, 1, 146, 116],
-    [4, 64, 40, 5, 65, 41],
-    [11, 36, 16, 5, 37, 17],
-    [11, 36, 12, 5, 37, 13],
-    [5, 109, 87, 1, 110, 88],
-    [5, 65, 41, 5, 66, 42],
-    [5, 54, 24, 7, 55, 25],
-    [11, 36, 12],
-    [5, 122, 98, 1, 123, 99],
-    [7, 73, 45, 3, 74, 46],
-    [15, 43, 19, 2, 44, 20],
-    [3, 45, 15, 13, 46, 16],
-    [1, 135, 107, 5, 136, 108],
-    [10, 74, 46, 1, 75, 47],
-    [1, 50, 22, 15, 51, 23],
-    [2, 42, 14, 17, 43, 15],
-    [5, 150, 120, 1, 151, 121],
-    [9, 69, 43, 4, 70, 44],
-    [17, 50, 22, 1, 51, 23],
-    [2, 42, 14, 19, 43, 15],
-    [3, 141, 113, 4, 142, 114],
-    [3, 70, 44, 11, 71, 45],
-    [17, 47, 21, 4, 48, 22],
-    [9, 39, 13, 16, 40, 14],
-    [3, 135, 107, 5, 136, 108],
-    [3, 67, 41, 13, 68, 42],
-    [15, 54, 24, 5, 55, 25],
-    [15, 43, 15, 10, 44, 16],
-    [4, 144, 116, 4, 145, 117],
-    [17, 68, 42],
-    [17, 50, 22, 6, 51, 23],
-    [19, 46, 16, 6, 47, 17],
-    [2, 139, 111, 7, 140, 112],
-    [17, 74, 46],
-    [7, 54, 24, 16, 55, 25],
-    [34, 37, 13],
-    [4, 151, 121, 5, 152, 122],
-    [4, 75, 47, 14, 76, 48],
-    [11, 54, 24, 14, 55, 25],
-    [16, 45, 15, 14, 46, 16],
-    [6, 147, 117, 4, 148, 118],
-    [6, 73, 45, 14, 74, 46],
-    [11, 54, 24, 16, 55, 25],
-    [30, 46, 16, 2, 47, 17],
-    [8, 132, 106, 4, 133, 107],
-    [8, 75, 47, 13, 76, 48],
-    [7, 54, 24, 22, 55, 25],
-    [22, 45, 15, 13, 46, 16],
-    [10, 142, 114, 2, 143, 115],
-    [19, 74, 46, 4, 75, 47],
-    [28, 50, 22, 6, 51, 23],
-    [33, 46, 16, 4, 47, 17],
-    [8, 152, 122, 4, 153, 123],
-    [22, 73, 45, 3, 74, 46],
-    [8, 53, 23, 26, 54, 24],
-    [12, 45, 15, 28, 46, 16],
-    [3, 147, 117, 10, 148, 118],
-    [3, 73, 45, 23, 74, 46],
-    [4, 54, 24, 31, 55, 25],
-    [11, 45, 15, 31, 46, 16],
-    [7, 146, 116, 7, 147, 117],
-    [21, 73, 45, 7, 74, 46],
-    [1, 53, 23, 37, 54, 24],
-    [19, 45, 15, 26, 46, 16],
-    [5, 145, 115, 10, 146, 116],
-    [19, 75, 47, 10, 76, 48],
-    [15, 54, 24, 25, 55, 25],
-    [23, 45, 15, 25, 46, 16],
-    [13, 145, 115, 3, 146, 116],
-    [2, 74, 46, 29, 75, 47],
-    [42, 54, 24, 1, 55, 25],
-    [23, 45, 15, 28, 46, 16],
-    [17, 145, 115],
-    [10, 74, 46, 23, 75, 47],
-    [10, 54, 24, 35, 55, 25],
-    [19, 45, 15, 35, 46, 16],
-    [17, 145, 115, 1, 146, 116],
-    [14, 74, 46, 21, 75, 47],
-    [29, 54, 24, 19, 55, 25],
-    [11, 45, 15, 46, 46, 16],
-    [13, 145, 115, 6, 146, 116],
-    [14, 74, 46, 23, 75, 47],
-    [44, 54, 24, 7, 55, 25],
-    [59, 46, 16, 1, 47, 17],
-    [12, 151, 121, 7, 152, 122],
-    [12, 75, 47, 26, 76, 48],
-    [39, 54, 24, 14, 55, 25],
-    [22, 45, 15, 41, 46, 16],
-    [6, 151, 121, 14, 152, 122],
-    [6, 75, 47, 34, 76, 48],
-    [46, 54, 24, 10, 55, 25],
-    [2, 45, 15, 64, 46, 16],
-    [17, 152, 122, 4, 153, 123],
-    [29, 74, 46, 14, 75, 47],
-    [49, 54, 24, 10, 55, 25],
-    [24, 45, 15, 46, 46, 16],
-    [4, 152, 122, 18, 153, 123],
-    [13, 74, 46, 32, 75, 47],
-    [48, 54, 24, 14, 55, 25],
-    [42, 45, 15, 32, 46, 16],
-    [20, 147, 117, 4, 148, 118],
-    [40, 75, 47, 7, 76, 48],
-    [43, 54, 24, 22, 55, 25],
-    [10, 45, 15, 67, 46, 16],
-    [19, 148, 118, 6, 149, 119],
-    [18, 75, 47, 31, 76, 48],
-    [34, 54, 24, 34, 55, 25],
-    [20, 45, 15, 61, 46, 16]
-  ];
-  QRRSBlock.getRSBlocks = function (typeNumber, errorCorrectLevel) {
-    var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
-    if (rsBlock == undefined) {
-      throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
-    }
-    var length = rsBlock.length / 3;
-    var list = [];
-    for (var i = 0; i < length; i++) {
-      var count = rsBlock[i * 3 + 0];
-      var totalCount = rsBlock[i * 3 + 1];
-      var dataCount = rsBlock[i * 3 + 2];
-      for (var j = 0; j < count; j++) {
-        list.push(new QRRSBlock(totalCount, dataCount));
-      }
-    }
-    return list;
-  };
-  QRRSBlock.getRsBlockTable = function (typeNumber, errorCorrectLevel) {
-    switch (errorCorrectLevel) {
-      case QRErrorCorrectLevel.L:
-        return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
-      case QRErrorCorrectLevel.M:
-        return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
-      case QRErrorCorrectLevel.Q:
-        return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
-      case QRErrorCorrectLevel.H:
-        return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
-      default:
-        return undefined;
-    }
-  };
-
-  function QRBitBuffer() {
-    this.buffer = [];
-    this.length = 0;
-  }
-  QRBitBuffer.prototype = {
-    get: function (index) {
-      var bufIndex = Math.floor(index / 8);
-      return ((this.buffer[bufIndex] >>> (7 - index % 8)) & 1) == 1;
-    },
-    put: function (num, length) {
-      for (var i = 0; i < length; i++) {
-        this.putBit(((num >>> (length - i - 1)) & 1) == 1);
-      }
-    },
-    getLengthInBits: function () {
-      return this.length;
-    },
-    putBit: function (bit) {
-      var bufIndex = Math.floor(this.length / 8);
-      if (this.buffer.length <= bufIndex) {
-        this.buffer.push(0);
-      }
-      if (bit) {
-        this.buffer[bufIndex] |= (0x80 >>> (this.length % 8));
-      }
-      this.length++;
-    }
-  };
-  var QRCodeLimitLength = [
-    [17, 14, 11, 7],
-    [32, 26, 20, 14],
-    [53, 42, 32, 24],
-    [78, 62, 46, 34],
-    [106, 84, 60, 44],
-    [134, 106, 74, 58],
-    [154, 122, 86, 64],
-    [192, 152, 108, 84],
-    [230, 180, 130, 98],
-    [271, 213, 151, 119],
-    [321, 251, 177, 137],
-    [367, 287, 203, 155],
-    [425, 331, 241, 177],
-    [458, 362, 258, 194],
-    [520, 412, 292, 220],
-    [586, 450, 322, 250],
-    [644, 504, 364, 280],
-    [718, 560, 394, 310],
-    [792, 624, 442, 338],
-    [858, 666, 482, 382],
-    [929, 711, 509, 403],
-    [1003, 779, 565, 439],
-    [1091, 857, 611, 461],
-    [1171, 911, 661, 511],
-    [1273, 997, 715, 535],
-    [1367, 1059, 751, 593],
-    [1465, 1125, 805, 625],
-    [1528, 1190, 868, 658],
-    [1628, 1264, 908, 698],
-    [1732, 1370, 982, 742],
-    [1840, 1452, 1030, 790],
-    [1952, 1538, 1112, 842],
-    [2068, 1628, 1168, 898],
-    [2188, 1722, 1228, 958],
-    [2303, 1809, 1283, 983],
-    [2431, 1911, 1351, 1051],
-    [2563, 1989, 1423, 1093],
-    [2699, 2099, 1499, 1139],
-    [2809, 2213, 1579, 1219],
-    [2953, 2331, 1663, 1273]
-  ];
-
-
-
-  /**
-   * Get the type by string length
-   * 
-   * @private
-   * @param {String} sText
-   * @param {Number} nCorrectLevel
-   * @return {Number} type
-   */
-  function _getTypeNumber(sText, nCorrectLevel) {
-    var nType = 1;
-    var length = _getUTF8Length(sText);
-
-    for (var i = 0, len = QRCodeLimitLength.length; i <= len; i++) {
-      var nLimit = 0;
-
-      switch (nCorrectLevel) {
-        case QRErrorCorrectLevel.L:
-          nLimit = QRCodeLimitLength[i][0];
-          break;
-        case QRErrorCorrectLevel.M:
-          nLimit = QRCodeLimitLength[i][1];
-          break;
-        case QRErrorCorrectLevel.Q:
-          nLimit = QRCodeLimitLength[i][2];
-          break;
-        case QRErrorCorrectLevel.H:
-          nLimit = QRCodeLimitLength[i][3];
-          break;
-      }
-
-      if (length <= nLimit) {
-        break;
-      } else {
-        nType++;
-      }
-    }
-
-    if (nType > QRCodeLimitLength.length) {
-      throw new Error("Too long data");
-    }
-
-    return nType;
-  }
-
-  function _getUTF8Length(sText) {
-    var replacedText = encodeURI(sText).toString().replace(/\%[0-9a-fA-F]{2}/g, 'a');
-    return replacedText.length + (replacedText.length != sText ? 3 : 0);
-  }
-
-  /**
-   * @class QRCode
-   * @constructor
-   * @example 
-   * new QRCode(document.getElementById("test"), "http://jindo.dev.naver.com/collie");
-   *
-   * @example
-   * var oQRCode = new QRCode("test", {
-   *    text : "http://naver.com",
-   *    width : 128,
-   *    height : 128
-   * });
-   * 
-   * oQRCode.makeCode("http://map.naver.com"); // Re-create the QRCode.
-   *
-   * @param {HTMLElement|String} el target element or 'id' attribute of element.
-   * @param {Object|String} vOption
-   * @param {String} vOption.text QRCode link data
-   * @param {Number} [vOption.width=256]
-   * @param {Number} [vOption.height=256]
-   * @param {String} [vOption.colorDark="#000000"]
-   * @param {String} [vOption.colorLight="#ffffff"]
-   * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H] 
-   */
-  QRCode = function (vOption) {
-    this._htOption = {
-      width: 256,
-      height: 256,
-      typeNumber: 4,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRErrorCorrectLevel.H
-    };
-
-    if (typeof vOption === 'string') {
-      vOption = {
-        text: vOption
-      };
-    }
-
-    // Overwrites options
-    if (vOption) {
-      for (var i in vOption) {
-        this._htOption[i] = vOption[i];
-      }
-    }
-
-    this._oQRCode = null;
-
-    if (this._htOption.text) {
-      return this.makeCode(this._htOption.text);
-    }
-  };
-
-  /**
-   * Make the QRCode
-   * 
-   * @param {String} sText link data
-   */
-  QRCode.prototype.makeCode = function (sText) {
-    this._oQRCode = new QRCodeModel(_getTypeNumber(sText, this._htOption.correctLevel), this._htOption.correctLevel);
-    this._oQRCode.addData(sText);
-    this._oQRCode.make();
-    return this.getStr(this._oQRCode);
-  };
-
-  QRCode.prototype.getStr = function (str) {
-    var result = '';
-    var nCount = this._oQRCode.getModuleCount();
-    console.log("nCount:" + nCount + '\n')
-
-
-    for (var row = 0; row < nCount; row++) {
-      for (var col = 0; col < nCount; col++) {
-        var bIsDark = this._oQRCode.isDark(row, col);
-        result += bIsDark ? '■' : '  '
-      }
-      //result += '\n'
-    }
-    this._bIsPainted = true;
-    return result
-  }
-
-
-  /**
-   * @name QRCode.CorrectLevel
-   */
-  QRCode.CorrectLevel = QRErrorCorrectLevel;
-})();
-
-//------------------------qrcode 相关代码结束------------------------
-//------------------------表盘开始------------------------
 try {
   (() => {
-    var n = __$$hmAppManager$$__.currentApp;
-    const g = n.current,
-      {
-        px: e
-      } =
-        (new DeviceRuntimeCore.WidgetFactory(
-          new DeviceRuntimeCore.HmDomApi(n, g)
-        ),
-          n.app.__globals__)
-    let p
-    try {
-      p = DeviceRuntimeCore.HmLogger.getLogger("watchface6");
-    } catch (e) { }
+    var __$$app$$__ = __$$hmAppManager$$__.currentApp;
+    var __$$module$$__ = __$$app$$__.current;
+    var h = new DeviceRuntimeCore.WidgetFactory(
+      new DeviceRuntimeCore.HmDomApi(__$$app$$__, __$$module$$__),"WatchFace Plus"
+    );
+    var logger = DeviceRuntimeCore.HmLogger.getLogger("WatchFace Plus");
+    ("use strict");
 
-    //资源链接------------------------
-    const moonArray = ['m/1.png', 'm/2.png', 'm/3.png', 'm/4.png', 'm/5.png', 'm/6.png', 'm/7.png', 'm/8.png', 'm/9.png', 'm/10.png', 'm/11.png', 'm/12.png', 'm/13.png', 'm/14.png',
-      'm/15.png', 'm/16.png', 'm/17.png', 'm/18.png', 'm/19.png', 'm/20.png', 'm/21.png', 'm/22.png', 'm/23.png', 'm/24.png', 'm/25.png', 'm/26.png', 'm/27.png', 'm/28.png', 'm/29.png', 'm/30.png'
-    ]
-    const mbg = ['mo/1.png', 'mo/2.png', 'mo/3.png', 'mo/4.png', 'mo/5.png', 'mo/6.png', 'mo/7.png', 'mo/8.png']
-    const mf = ['mo/1f.png', 'mo/2f.png', 'mo/3f.png', 'mo/4f.png', 'mo/5f.png', 'mo/6f.png', 'mo/7f.png', 'mo/8f.png']
+    function range(start, end, step = 1) {
+      if (arguments.length === 1) {
+        end = start
+        start = 0
+        step = 1
+      }
+      const result = []
+      for (let i = start; i < end; i += step) {
+        result.push(i)
+      }
+      return result
+    }
 
-    let mainTimer
+    function showToast(t) {
+      try {
+        hmUI.showToast({
+          text: t
+        })
+      } catch (e) {}
+    }
+
+    function setGroupVisible(ui, v) {
+      ui.setProperty(hmUI.prop.VISIBLE, v);
+    }
+
+    //-------------------------resources------------------------------------
 
     const topBtnX = 55;
     const topBtnY = 2;
@@ -1138,102 +62,99 @@ try {
     let hour_array = null
     let week_array = null
 
+    let moonArray = null
+    let bgPics = null
+    let frontPics = null
+
     let bat = null
     let bat_level = null
 
-    function range(start, end, step = 1) {
-      if (arguments.length === 1) {
-        end = start
-        start = 0
-        step = 1
-      }
+    let img_array = ['qr/alipay.png','qr/wechat.png']
 
-      const result = []
-      for (let i = start; i < end; i += step) {
-        result.push(i)
-      }
-
-      return result
-    }
-
+    moonArray = range(30).map((v) => {
+      return `m/${v + 1}.png`
+    })
+    bgPics = range(8).map((v) => {
+      return `mo/${v + 1}.png`
+    })
+    frontPics = range(8).map((v) => {
+      return `mo/${v + 1}f.png`
+    })
     month_array = range(10).map((v) => {
       return `date/${v}.png`
     })
-
     hour_array = range(10).map((v) => {
       return `time/${v}.png`
     })
-
     week_array = range(7).map((v) => {
       return `week/${v + 1}.png`
     })
-
-    console.log(week_array)
-
     bat = range(10).map((v) => {
       return `bat/${v}.png`
     })
-
     bat_level = range(11).map((v) => {
       return `batlevel/${v}.png`
     })
 
-    function showToast(t) {
-      try {
-        hmUI.showToast({
-          text: t
-        })
-      } catch (e) { }
-    }
-    g.module = DeviceRuntimeCore.WatchFace({
-      init_view() {
+    const vibrate = hmSensor.createSensor(hmSensor.id.VIBRATE)
+    const battery = hmSensor.createSensor(hmSensor.id.BATTERY)
+    const jstime = hmSensor.createSensor(hmSensor.id.TIME)
+    const step = hmSensor.createSensor(hmSensor.id.STEP)
+    let views = [];
+    let pages = ['home'];
 
-        const bg = hmUI.createWidget(hmUI.widget.IMG, {
+    let isAutoBright
+    let bright
+
+    __$$module$$__.module = DeviceRuntimeCore.WatchFace({
+      init_view() {
+        let WatchFace = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
-          src: mbg[0],
-          //image_array: mbg,
-          //image_length: mbg.length,
-          //level: 1,
+          w: 192,
+          h: 490,
           show_level: hmUI.show_level.ONLY_NORMAL
+        });
+
+        const bg = WatchFace.createWidget(hmUI.widget.IMG, {
+          x: 0,
+          y: 0,
+          src: bgPics[0],
+          //image_array: bgPics,
+          //image_length: bgPics.length,
+          //level: 1,
         })
-        //----------------系统状态----------------------------------
-        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+        //-------------------------status----------------------------------
+        WatchFace.createWidget(hmUI.widget.IMG_STATUS, {
           x: 10,
           y: 65,
           type: hmUI.system_status.DISCONNECT,
           src: 'state/bluetooth.png',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+        WatchFace.createWidget(hmUI.widget.IMG_STATUS, {
           x: 40,
           y: 65,
           type: hmUI.system_status.DISTURB,
           src: 'state/disturb.png',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.IMG_STATUS, {
+        WatchFace.createWidget(hmUI.widget.IMG_STATUS, {
           x: 70,
           y: 65,
           type: hmUI.system_status.LOCK,
           src: 'state/lock.png',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-
-        const batIcon = hmUI.createWidget(hmUI.widget.IMG_LEVEL, {
+        const batIcon = WatchFace.createWidget(hmUI.widget.IMG_LEVEL, {
           x: 140,
           y: 65,
           image_array: bat_level,
           image_length: bat_level.length,
-          //type: Math.floor(hmUI.data_type.BATTERY / 10),
           level: 10,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+        WatchFace.createWidget(hmUI.widget.TEXT_IMG, {
           x: 160,
           y: 65,
           font_array: bat,
@@ -1241,21 +162,11 @@ try {
           align_h: hmUI.align.LEFT,
           type: hmUI.data_type.BATTERY,
           //text: '0',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
+        //-------------------------date ,week & moon----------------------------------
 
-        const moonFace = hmUI.createWidget(hmUI.widget.IMG, {
-          x: 157,
-          y: 100,
-          src: moonArray[0],
-          //image_array: moonArray,
-          //image_length: moonArray.length,
-          //type: hmUI.data_type.MOON,
-          show_level: hmUI.show_level.ONLY_NORMAL
-        })
-
-        hmUI.createWidget(hmUI.widget.IMG_DATE, {
+        WatchFace.createWidget(hmUI.widget.IMG_DATE, {
           month_startX: 10,
           month_startY: 100,
           month_sc_array: month_array,
@@ -1275,7 +186,6 @@ try {
           day_zero: 1,
           day_follow: 1,
           day_is_character: !1,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
         hmUI.createWidget(hmUI.widget.IMG_WEEK, {
@@ -1284,91 +194,83 @@ try {
           week_en: week_array,
           week_tc: week_array,
           week_sc: week_array,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.IMG_TIME, {
+        const moonFace = WatchFace.createWidget(hmUI.widget.IMG, {
+          x: 157,
+          y: 100,
+          src: moonArray[0],
+        })
+
+        //-------------------------time----------------------------------
+
+        WatchFace.createWidget(hmUI.widget.IMG_TIME, {
           hour_zero: 1,
           hour_startX: 10,
           hour_startY: 160,
           hour_array: hour_array,
           hour_space: 3,
-          // hour_unit_sc: "13.png",
-          // hour_unit_tc: "13.png",
-          // hour_unit_en: "13.png",
           hour_align: hmUI.align.RIGHT,
           minute_zero: 1,
           minute_array: hour_array,
           minute_follow: 1,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-
-        const fg = hmUI.createWidget(hmUI.widget.IMG, {
+        const frontPic = WatchFace.createWidget(hmUI.widget.IMG, {
           x: 0,
           y: 182,
-          src: mf[0],
-          //image_array: mbg,
-          //image_length: mbg.length,
-          //level: 1,
-          show_level: hmUI.show_level.ONLY_NORMAL
+          src: frontPics[0],
         })
-        hmUI.createWidget(hmUI.widget.IMG_TIME, {
+
+        WatchFace.createWidget(hmUI.widget.IMG_TIME, {
           hour_zero: 1,
           hour_startX: 10,
           hour_startY: 160,
           hour_array: hour_array,
           hour_space: 3,
-          // hour_unit_sc: "13.png",
-          // hour_unit_tc: "13.png",
-          // hour_unit_en: "13.png",
           hour_align: hmUI.align.RIGHT,
           minute_zero: 1,
           minute_array: hour_array,
           minute_startX: 0,
           minute_startY: 490,
           minute_follow: 0,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
 
-        //--------------------统计区
+        //--------------------stats---------------------------
 
-        hmUI.createWidget(hmUI.widget.IMG, {
+        WatchFace.createWidget(hmUI.widget.IMG, {
           x: 76,
           y: 280,
           src: 'walk.png',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+        WatchFace.createWidget(hmUI.widget.TEXT_IMG, {
           x: 104,
           y: 280,
           type: hmUI.data_type.STEP,
           font_array: month_array,
           h_space: 1,
           align_h: hmUI.align.LEFT,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
 
-        hmUI.createWidget(hmUI.widget.IMG, {
+        WatchFace.createWidget(hmUI.widget.IMG, {
           x: 76,
           y: 240,
           src: 'heart.png',
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
-        hmUI.createWidget(hmUI.widget.TEXT_IMG, {
+        WatchFace.createWidget(hmUI.widget.TEXT_IMG, {
           x: 104,
           y: 240,
           type: hmUI.data_type.HEART,
           font_array: month_array,
           h_space: 1,
           align_h: hmUI.align.LEFT,
-          show_level: hmUI.show_level.ONLY_NORMAL
         })
 
+        //--------------------AOD---------------------------
 
         hmUI.createWidget(hmUI.widget.IMG, {
           x: 0,
@@ -1378,6 +280,7 @@ try {
           src: "33.png",
           show_level: hmUI.show_level.ONLY_AOD
         })
+
         hmUI.createWidget(hmUI.widget.TIME_POINTER, {
           hour_centerX: 96,
           hour_centerY: 245,
@@ -1398,20 +301,15 @@ try {
           show_level: hmUI.show_level.ONLY_AOD
         })
 
-        //---------------------------------小程序入口-------------------------------------
-        //震动
-        const vibrate = hmSensor.createSensor(hmSensor.id.VIBRATE)
-        const views = [];
+        //---------------------------------apps-------------------------------------
 
-        var pages = ['home'];
-        const img_bkg = hmUI.createWidget(hmUI.widget.IMG, { //小程序图标
+        const appIcon = WatchFace.createWidget(hmUI.widget.IMG, {
           x: 38,
           y: 401,
-
           src: "apps.png",
           show_level: hmUI.show_level.ONLY_NORMAL
         })
-        img_bkg.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+        appIcon.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           if (pages[pages.length - 1] == 'home') {
             switchUI(false);
             pages.push("menu");
@@ -1419,12 +317,15 @@ try {
         })
 
         function switchUI(b) {
-          img_bkg.setProperty(hmUI.prop.VISIBLE, b);
+          appIcon.setProperty(hmUI.prop.VISIBLE, b);
           setGroupVisible(menuGroup, !b);
-          backBUtton.setProperty(hmUI.prop.VISIBLE, !b);
+          backButton.setProperty(hmUI.prop.VISIBLE, !b);
         }
 
-        //---------------------------------菜单-------------------------------------
+        //---------------------------------menu-------------------------------------
+        let menuItems = []
+        let pageSize = 4;
+        let offset = 0;
 
         let menuGroup = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
@@ -1432,7 +333,6 @@ try {
           w: fullWidth,
           h: fullHeight
         })
-
         setGroupVisible(menuGroup, false);
 
         menuGroup.createWidget(hmUI.widget.FILL_RECT, {
@@ -1443,19 +343,35 @@ try {
           color: darkBG
         })
 
-        var apps = [
-          { text: '微信收款', id: 1 },
-          { text: '支付宝收款', id: 2 },
-          { text: '吃什么', id: 4 },
-          { text: '点数器', id: 3 },
-          { text: '骰子', id: 7 },
-          { text: '尺子', id: 6 },
-          { text: '关于', id: 5 },
+        var apps = [{
+            text: '二维码1',
+            id: 1
+          },
+          {
+            text: '二维码2',
+            id: 2
+          },
+          {
+            text: '吃什么',
+            id: 4
+          },
+          {
+            text: '点数器',
+            id: 3
+          },
+          {
+            text: '骰子',
+            id: 7
+          },
+          {
+            text: '尺子',
+            id: 6
+          },
+          {
+            text: '关于',
+            id: 5
+          },
         ]
-
-        let menuItems = []
-        let pageSize = 4;
-        let offset = 0;
 
         for (let i = 0; i < apps.length; i++) {
           const app = apps[i];
@@ -1470,7 +386,9 @@ try {
             color: lightText,
             text_size: 28,
             radius: 48,
-            click_func: () => { openApp(app['id'],) }
+            click_func: () => {
+              openApp(app['id'], )
+            }
           })
           menuItems.push(m)
         }
@@ -1487,7 +405,6 @@ try {
           switchMenu()
         })
 
-
         function switchMenu() {
           if (offset >= menuItems.length) {
             offset = 0
@@ -1501,7 +418,9 @@ try {
         }
         switchMenu()
 
-        //---------------------------------微信收款-------------------------------------
+        //---------------------------------wechat collect-------------------------------------
+
+        let showIndex1 = 0;
 
         let app1Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
@@ -1525,13 +444,13 @@ try {
           w: fullWidth,
           h: 50,
           color: darkBG,
-          text: "微信收款",
+          text: "二维码1",
           text_size: titleFont,
           text_style: hmUI.text_style.NONE,
           align_h: hmUI.align.CENTER_H,
         })
 
-        app1Group.createWidget(hmUI.widget.IMG, {
+        const img1 = app1Group.createWidget(hmUI.widget.IMG, {
           x: 3,
           y: 120,
           src: 'qr/wechat.png',
@@ -1539,94 +458,27 @@ try {
           h: 186,
         })
 
-        const textCode = app1Group.createWidget(hmUI.widget.TEXT, {
-          x: 9,
-          y: 150,
-          w: 180,
-          h: 192,
-          color: darkBG,
-          text: "",
-          text_size: 6,
-          text_style: hmUI.text_style.WRAP,
-        })
-
-        app1Group.createWidget(hmUI.widget.IMG, {
-          x: 74,
-          y: 350,
-          src: 'wechat.png'
-        })
-
-        var wechatCode = "wxp://f2f0eWEfpXmzZbm81ToT4fYhhnx1_w1Lv"
-
-        function updateWechatCode() {
-          var qrcode = new QRCode({
-            text: wechatCode,
-            width: 128,
-            height: 128,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.L
-          });
-          var str = qrcode.getStr()
-          var cols = qrcode._oQRCode.getModuleCount()
-          showToast('qrcode Rows:' + cols)
-
-          if (cols > 100) {
-            textCode.setProperty(hmUI.prop.MORE, {
-              text: "二维码过大",
-              text_size: 18,
-            })
-            return
-          }
-          textCode.setProperty(hmUI.prop.MORE, {
-            x: Math.floor((fullWidth - 4) % cols / 2),
-            text_size: Math.floor((fullWidth - 4) / cols),
-            w: Math.floor((fullWidth - 4) / cols) * cols + 1,
-            text: str
-          })
-        }
-
-        const editWechat = app1Group.createWidget(hmUI.widget.IMG, {
+        const nextImg1 = app1Group.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
           w: iconBtnW,
           h: 50,
-          src: "edit.png"
+          src: "next.png"
         })
 
-        editWechat.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app1") {
-            return
+        nextImg1.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          showIndex1 ++;
+          if(showIndex1 >= img_array.length){
+            showIndex1 = 0
           }
-          showToast('暂未实现')
-          return
-          goin(wechatEdit)
-          wechatEdit.setProperty(hmUI.prop.VISIBLE, true)
-          pages.push('edit')
-          inputTarget = 'wechat'
-          setGroupVisible(inputGroup, true)
-          inputStr = wechatCode
-          updateInputBox()
+          img1.setProperty(hmUI.prop.MORE,{
+            src:img_array[showIndex1]
+          })
         })
 
-        let wechatEdit = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(wechatEdit, false)
+        //-------------------------------- aplipay collect-------------------------------------
 
-        wechatEdit.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-
-        //-------------------------------- 支付宝收款-------------------------------------
+        let showIndex2 = 0;
 
         let app2Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
@@ -1650,13 +502,13 @@ try {
           w: fullWidth,
           h: 50,
           color: darkBG,
-          text: "支付宝收款",
+          text: "二维码2",
           text_size: titleFont,
           text_style: hmUI.text_style.NONE,
           align_h: hmUI.align.CENTER_H,
         })
 
-        app2Group.createWidget(hmUI.widget.IMG, {
+        const img2 = app2Group.createWidget(hmUI.widget.IMG, {
           x: 3,
           y: 120,
           src: 'qr/alipay.png',
@@ -1664,100 +516,30 @@ try {
           h: 186,
         })
 
-        // const alpay = app2Group.createWidget(hmUI.widget.TEXT, {
-        //   x: 9,
-        //   y: 115,
-        //   w: 180,
-        //   h: 240,
-        //   color: darkBG,
-        //   text: "",
-        //   text_size: 6,
-        //   line_space: 0,
-        //   char_space: 0,
-        //   text_style: hmUI.text_style.WRAP,
-        // })
-
-        // app2Group.createWidget(hmUI.widget.IMG, {
-        //   x: 77,
-        //   y: 365,
-        //   src: 'alipay.png'
-        // })
-
-        // var alipayCode = "https://qr.alipay.com/fkx181795dfsbwm8usxip57"
-
-        // function updateAlipayCode() {
-        //   var qrcode = new QRCode({
-        //     text: alipayCode,
-        //     width: 128,
-        //     height: 128,
-        //     colorDark: "#000000",
-        //     colorLight: "#ffffff",
-        //     correctLevel: QRCode.CorrectLevel.L
-        //   });
-        //   var str = qrcode.getStr()
-        //   var cols = qrcode._oQRCode.getModuleCount()
-        //   showToast('qrcode Rows:' + cols)
-        //   if (cols > 100) {
-        //     alpay.setProperty(hmUI.prop.MORE, {
-        //       text: "二维码过大",
-        //       text_size: 18,
-        //     })
-        //     return
-        //   }
-        //   alpay.setProperty(hmUI.prop.MORE, {
-        //     x: Math.floor((fullWidth - 4) % cols / 2),
-        //     text_size: Math.floor((fullWidth - 4) / cols),
-        //     w: Math.floor((fullWidth - 4) / cols) * cols + 1,
-        //     text: str
-        //   })
-        // }
-
-
-        const editAlipay = app2Group.createWidget(hmUI.widget.IMG, {
+        const nextImg2 = app2Group.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
           w: iconBtnW,
           h: 50,
-          src: "edit.png"
+          src: "next.png"
         })
 
-        editAlipay.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app2") {
-            return
+        nextImg2.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          showIndex2++;
+          if (showIndex2 >= img_array.length) {
+            showIndex2 = 0
           }
-          showToast('暂未实现')
-          return
-          goin(aliPayEdit)
-          aliPayEdit.setProperty(hmUI.prop.VISIBLE, true)
-          pages.push('edit')
-          inputTarget = 'alipay'
-          setGroupVisible(inputGroup, true)
-          inputStr = alipayCode
-          updateInputBox()
+          img2.setProperty(hmUI.prop.MORE, {
+            src: img_array[showIndex2]
+          })
         })
 
-        let aliPayEdit = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(aliPayEdit, false)
-
-        aliPayEdit.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-        //-------------------------------- 点数器-------------------------------------
+        //-------------------------------- counter-------------------------------------
 
         let count = 0;
         let doVibrate = true;
 
-        let app3Group = hmUI.createWidget(hmUI.widget.GROUP, { //点数器
+        let app3Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
           w: fullWidth,
@@ -1839,9 +621,7 @@ try {
           w: fullWidth,
           h: 250,
           radius: fullWidth / 2,
-          color: lightBG,
-          text_size: 36,
-          text: 0
+          color: 0x191970,
         })
 
         app3Group.createWidget(hmUI.widget.TEXT, {
@@ -1855,7 +635,6 @@ try {
           align_v: hmUI.align.CENTER_V,
           text: "点击+1"
         })
-
 
 
         addCount.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
@@ -1879,7 +658,8 @@ try {
           });
         })
 
-        //--------------------------------吃什么-------------------------------------
+        //--------------------------------eat what-------------------------------------
+
         let fastFoods = ['云吞', '拉面', '烧烤', '米线', '螺蛳粉', '汉堡', '炸鸡', '披萨', '寿司', '手抓饼', '海鲜粥', '羊肉粉', '牛杂', '焗饭', '黄焖鸡',
           '猪脚饭', '白切鸡', '葱油鸡', '烧鸭饭', '烧鹅饭', '麻辣烫', '泡面', '盖浇饭', '泡馍', '麻辣香锅', '刀削面', '热干面', '桂林米粉', '酸辣粉', '饺子',
           '脆皮鸡饭', '关东煮', '凉皮', '烤肉拌饭', '包子', '馄饨', '炸酱面', '卤菜', '煲仔饭', '重庆小面', '意大利面', '酸菜鱼', '炒饭', '炒粉', '咖喱饭'
@@ -1889,6 +669,10 @@ try {
         ];
         let fastFoodsStat = [];
         let dinnersStat = [];
+        let fastfoodIndex = 0;
+        let dinnerIndex = 1;
+
+
         let app4Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
@@ -1916,7 +700,9 @@ try {
           text: '快餐',
           color: lightText,
           text_size: 28,
-          click_func: () => { gotoFastfood() }
+          click_func: () => {
+            gotoFastfood()
+          }
         })
 
         app4Group.createWidget(hmUI.widget.BUTTON, {
@@ -1930,7 +716,9 @@ try {
           text: '正餐',
           color: lightText,
           text_size: 28,
-          click_func: () => { gotoDinner() }
+          click_func: () => {
+            gotoDinner()
+          }
         })
 
         let fastfoodGroup = hmUI.createWidget(hmUI.widget.GROUP, {
@@ -1955,32 +743,32 @@ try {
           w: fullWidth,
           h: 50,
           align_h: hmUI.align.CENTER_H,
-          text_size: 32,
+          text_size: titleFont,
           color: gold,
           text: '云吞'
         })
 
         const fastfoodCount = fastfoodGroup.createWidget(hmUI.widget.TEXT, {
           x: 0,
-          y: 250,
+          y: 280,
           w: fullWidth,
           h: 50,
           align_h: hmUI.align.CENTER_H,
-          text_size: smallFont,
+          text_size: normalFont,
           color: lightText,
           text: '还没选过'
         })
 
         fastfoodGroup.createWidget(hmUI.widget.BUTTON, {
           x: 45,
-          y: 350,
+          y: 100,
           w: 102,
           h: 50,
           text: '选择',
           press_color: lightBG,
           normal_color: btnPress,
           color: lightText,
-          text_size: smallFont,
+          text_size: normalFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "fastfood") {
@@ -1997,8 +785,6 @@ try {
             updateFastFoodCount()
           }
         })
-
-        let fastfoodIndex = 0;
 
         const refreshFastfood = fastfoodGroup.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
@@ -2047,43 +833,32 @@ try {
           w: fullWidth,
           h: 100,
           align_h: hmUI.align.CENTER_H,
-          text_size: 32,
+          text_size: titleFont,
           color: gold,
           text: '水煮鱼'
         })
 
         const dinnerCount = dinnerGroup.createWidget(hmUI.widget.TEXT, {
           x: 0,
-          y: 250,
+          y: 280,
           w: fullWidth,
           h: 50,
           align_h: hmUI.align.CENTER_H,
-          text_size: smallFont,
+          text_size: normalFont,
           color: lightText,
           text: '还没选过'
         })
 
-        const dinnerSelect = dinnerGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 350,
-          w: fullWidth,
-          h: 50,
-          align_h: hmUI.align.CENTER_H,
-          text_size: 24,
-          color: lightText,
-          text: '选择'
-        })
-
         dinnerGroup.createWidget(hmUI.widget.BUTTON, {
           x: 60,
-          y: 350,
+          y: 100,
           w: 72,
           h: 50,
           text: '选择',
           press_color: lightBG,
           normal_color: btnPress,
           color: lightText,
-          text_size: smallFont,
+          text_size: normalFont,
           radius: 15,
           click_func: () => {
             if (pages[pages.length - 1] != "dinner") {
@@ -2101,7 +876,7 @@ try {
           }
         })
 
-        var dinnerIndex = 1;
+        
         const refreshDinner = dinnerGroup.createWidget(hmUI.widget.IMG, { //小程序图标
           x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
@@ -2144,8 +919,10 @@ try {
           pages.push('dinner')
         }
 
+        //--------------------------------about -------------------------------------
 
-        //--------------------------------关于-------------------------------------
+        let logStr = 'log:'
+
         let app5Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
@@ -2197,8 +974,6 @@ try {
           text_style: hmUI.text_style.WRAP
         })
 
-
-
         const logNav = app5Group.createWidget(hmUI.widget.IMG, {
           x: 5,
           y: 250,
@@ -2214,8 +989,6 @@ try {
           h: fullHeight,
           color: darkBG
         })
-
-        let logStr = 'log:'
 
         const logs = app5Group.createWidget(hmUI.widget.TEXT, {
           x: 0,
@@ -2267,14 +1040,15 @@ try {
           })
         }
 
-        //--------------------------------尺子-------------------------------------
+        //--------------------------------ruler-------------------------------------
+
         let app6Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
           y: 0,
           w: fullWidth,
           h: fullHeight
         })
-        setGroupVisible(app5Group, false)
+        setGroupVisible(app6Group, false)
 
         app6Group.createWidget(hmUI.widget.IMG, {
           x: 0,
@@ -2284,16 +1058,34 @@ try {
           src: 'ruler.png'
         })
 
-        setGroupVisible(app6Group, false)
-
-
-        //--------------------------------骰子-------------------------------------
-        let game = 0;
-        let touCount = 4;
-        let tou1 = 0;
-        let tou2 = 0;
-        let tou3 = 0;
-        let tou4 = 0;
+        //--------------------------------touzi-------------------------------------
+  
+        let touziGame = {
+          game : 0,
+          touCount: 4,
+          tou1: 0,
+          tou2: 0,
+          tou3: 0,
+          tou4: 0,
+          refresh:function(){
+            if(touCount > 0) {tou1 = Math.round(Math.random() * 5)}
+            if (touCount > 1) {tou2 = Math.round(Math.random() * 5)}
+            if (touCount > 2) {tou3 = Math.round(Math.random() * 5)}
+            if (touCount > 3) {tou4 = Math.round(Math.random() * 5)}
+          },
+          reset:function(){
+            game = 0;
+            tou1 = 0;
+            tou2 = 0;
+            tou3 = 0;
+            tou4 = 0;
+          },
+          changeTouCount:function(n){
+            touCount += n
+            if (touCount < 2) {touCount = 1;}
+            if (touCount > 3) {touCount = 4}
+          }
+        }
 
         let app7Group = hmUI.createWidget(hmUI.widget.GROUP, {
           x: 0,
@@ -2369,31 +1161,27 @@ try {
         })
 
         refreshTou.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          var t;
-          if (touCount > 0) {
-            tou1 = Math.round(Math.random() * 5)
-            t = tou1 + 1
+          let t
+          if (touziGame.touCount > 0) {
+            t = touziGame.tou1 + 1
             tou1Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
           if (touCount > 1) {
-            tou2 = Math.round(Math.random() * 5)
-            t = tou2 + 1
+            t = touziGame.tou2 + 1
             tou2Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
           if (touCount > 2) {
-            tou3 = Math.round(Math.random() * 5)
-            t = tou3 + 1
+            t = touziGame.tou3 + 1
             tou3Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
           if (touCount > 3) {
-            tou4 = Math.round(Math.random() * 5)
-            t = tou4 + 1
+            t = touziGame.tou4 + 1
             tou4Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
@@ -2430,24 +1218,8 @@ try {
           text_size: normalFont,
           radius: 15,
           click_func: () => {
-            resetGame()
-            showToast('重置完毕')
-          }
-        })
-
-        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 21,
-          y: 60,
-          w: 150,
-          h: 75,
-          text: '重置游戏',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            resetGame()
+            touziGame.reset()
+            updateGameStat()
             showToast('重置完毕')
           }
         })
@@ -2474,7 +1246,11 @@ try {
           text_size: normalFont,
           radius: 15,
           click_func: () => {
-            changeTouCount(-1)
+            touziGame.changeTouCount(-1)
+            updateTouCount()
+            ruleStr.setProperty(hmUI.prop.MORE, {
+              text: '骰子数量：' + touziGame.touCount
+            })
           }
         })
 
@@ -2490,59 +1266,39 @@ try {
           text_size: normalFont,
           radius: 15,
           click_func: () => {
-            changeTouCount(1)
+            touziGame.changeTouCount(1)
+            updateTouCount()
+            ruleStr.setProperty(hmUI.prop.MORE, {
+              text: '骰子数量：' + touziGame.touCount
+            })
           }
         })
 
-        function changeTouCount(n) {
-          touCount += n
-          if (touCount < 2) {
-            touCount = 1;
-          }
-          if (touCount > 3) {
-            touCount = 4
-          }
-          updateTouCount()
-          ruleStr.setProperty(hmUI.prop.MORE, {
-            text: '骰子数量：' + touCount
-          })
-        }
-
-
         function updateTouCount() {
-          tou1Img.setProperty(hmUI.prop.VISIBLE, touCount > 0)
-          tou2Img.setProperty(hmUI.prop.VISIBLE, touCount > 1)
-          tou3Img.setProperty(hmUI.prop.VISIBLE, touCount > 2)
-          tou4Img.setProperty(hmUI.prop.VISIBLE, touCount > 3)
+          tou1Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 0)
+          tou2Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 1)
+          tou3Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 2)
+          tou4Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 3)
         }
 
         function updateGameStat() {
-          game++;
+          touziGame.game++;
           var total = 0;
-          total += (touCount > 0 ? (tou1 + 1) : 0)
-          total += (touCount > 1 ? (tou2 + 1) : 0)
-          total += (touCount > 2 ? (tou3 + 1) : 0)
-          total += (touCount > 3 ? (tou4 + 1) : 0)
+          total += (touziGame.touCount > 0 ? (touziGame.tou1 + 1) : 0)
+          total += (touziGame.touCount > 1 ? (touziGame.tou2 + 1) : 0)
+          total += (touziGame.touCount > 2 ? (touziGame.tou3 + 1) : 0)
+          total += (touziGame.touCount > 3 ? (touziGame.tou4 + 1) : 0)
           touStat.setProperty(hmUI.prop.MORE, {
             x: 21,
             y: 60,
             w: 150,
             h: 80,
-            text: '第' + game + '轮\n总点数' + total,
+            text: '第' + touziGame.game + '轮\n总点数' + total,
           })
         }
 
-        function resetGame() {
-          game = 0;
-          tou1 = 0;
-          tou2 = 0;
-          tou3 = 0;
-          tou4 = 0;
-          updateGameStat()
-        }
+        //--------------------------------input box-------------------------------------
 
-
-        //--------------------------------输入框-------------------------------------
         var inputTarget = null;
         var inputStr = '';
         var inputCode = '';
@@ -2553,8 +1309,7 @@ try {
           w: fullWidth,
           h: fullHeight
         })
-
-
+        setGroupVisible(inputGroup, false)
 
         inputGroup.createWidget(hmUI.widget.FILL_RECT, {
           x: 0,
@@ -2589,8 +1344,6 @@ try {
           text_style: hmUI.text_style.WRAP
         })
 
-
-
         inputGroup.createWidget(hmUI.widget.BUTTON, {
           x: 2,
           y: 250,
@@ -2602,7 +1355,9 @@ try {
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('0') }
+          click_func: () => {
+            inputCodeX('0')
+          }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2616,7 +1371,9 @@ try {
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('1') }
+          click_func: () => {
+            inputCodeX('1')
+          }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2630,7 +1387,9 @@ try {
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('2') }
+          click_func: () => {
+            inputCodeX('2')
+          }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2644,7 +1403,9 @@ try {
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { inputCodeX('3') }
+          click_func: () => {
+            inputCodeX('3')
+          }
         })
 
         inputGroup.createWidget(hmUI.widget.BUTTON, {
@@ -2658,7 +1419,9 @@ try {
           color: lightText,
           press_color: lightBG,
           normal_color: btnPress,
-          click_func: () => { backSpace() }
+          click_func: () => {
+            backSpace()
+          }
         })
 
         function inputCodeX(n) {
@@ -2699,12 +1462,23 @@ try {
           }
         }
 
-        setGroupVisible(inputGroup, false)
-
-        //--------------------------------通用功能-------------------------------------
+        //---------------------------------nav----------------------------------------
+        const backButton = hmUI.createWidget(hmUI.widget.IMG, {
+          x: (fullWidth - iconBtnW) / 2,
+          y: topBtnY,
+          src: "back.png",
+        })
+        backButton.setProperty(hmUI.prop.VISIBLE, false);
+        backButton.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+          goback();
+        })
+        
+        //--------------------------------utils-------------------------------------
 
         function openApp(i) {
-          if (pages[pages.length - 1] != "menu") { return }
+          if (pages[pages.length - 1] != "menu") {
+            return
+          }
           switch (i) {
             case 1:
               goin(app1Group)
@@ -2757,20 +1531,8 @@ try {
             return
           }
           var ui = views.pop();
-          //if (ui.type == 'GROUP') {
           setGroupVisible(ui, false)
-          //}
         }
-
-        function setGroupVisible(ui, v) {
-          ui.setProperty(hmUI.prop.VISIBLE, v);
-          // ui.subWds.forEach(element => {
-          //   element.setProperty(hmUI.prop.VISIBLE, v);
-          // });
-        }
-
-        let isAutoBright
-        let bright
 
         function goin(ui) {
           views.push(ui);
@@ -2781,14 +1543,13 @@ try {
           setGroupVisible(ui, true);
         }
 
-        //检查亮度设置
         function checkBright() {
           try {
             isAutoBright = hmSetting.getScreenAutoBright()
             if (!isAutoBright) {
               bright = hmSetting.getBrightness()
             }
-          } catch (e) { }
+          } catch (e) {}
         }
 
         function setMaxBright() {
@@ -2796,11 +1557,9 @@ try {
             hmSetting.setScreenAutoBright(false)
             hmSetting.setBrightness(100)
           } catch (e) {
-
           }
         }
 
-        //重置亮度
         function resetBright() {
           try {
             if (isAutoBright) {
@@ -2808,55 +1567,49 @@ try {
             } else {
               hmSetting.setBrightness(bright)
             }
-          } catch (e) { }
+          } catch (e) {}
         }
-
-        pushLog('V1.0\n')
-
-        const backBUtton = hmUI.createWidget(hmUI.widget.IMG, { //返回按键
-          x: (fullWidth - iconBtnW) / 2,
-          y: topBtnY,
-          src: "back.png",
-        })
-        backBUtton.setProperty(hmUI.prop.VISIBLE, false);
-        backBUtton.addEventListener(hmUI.event.CLICK_DOWN, function (info) { goback(); })
-
-        //updateWechatCode()
-        //updateAlipayCode()
-
-        const battery = hmSensor.createSensor(hmSensor.id.BATTERY)
-        const jstime = hmSensor.createSensor(hmSensor.id.TIME)
-
 
         function updateBG() {
           var h = Math.ceil(jstime.hour / 3)
-          if (h > mbg.length - 1) {
+          if (h > bgPics.length - 1) {
             return
           }
           bg.setProperty(hmUI.prop.MORE, {
-            src: mbg[h]
+            src: bgPics[h]
           })
-          fg.setProperty(hmUI.prop.MORE, {
-            src: mf[h]
+          frontPic.setProperty(hmUI.prop.MORE, {
+            src: frontPics[h]
           })
-          //更新月相
-          moonFace.setProperty(hmUI.prop.MORE,{
-            src: moonArray[jstime.lunar_day]
-          })
+          if(jstime.lunar_day){
+            moonFace.setProperty(hmUI.prop.MORE, {
+              src: moonArray[jstime.lunar_day]
+            })
+          }
+          if (battery.current){
+            batIcon.setProperty(hmUI.prop.MORE, {
+              x: 140,
+              y: 65,
+              level: Math.floor(battery.current / 10)
+            })
+          }
         }
 
+        pushLog('V1.1\n')
         updateBG()
 
         battery.addEventListener(hmSensor.event.CHANGE, function () {
           updateBG()
-          batIcon.setProperty(hmUI.prop.MORE, {
-            x: 140,
-            y: 65,
-            level: Math.floor(battery.current / 10)
-          })
         })
 
+        let lastStep = 0;
 
+        step.addEventListener(hmSensor.event.CHANGE, function () {
+          if (step.current > lastStep + 100){
+            lastStep = step.current
+            updateBG()
+          }
+        })
 
 
         // function startTime(){
@@ -2868,13 +1621,13 @@ try {
         //         var h = Math.ceil((option.s) / 3) //jstime.hour
         //         showToast("h:"+h)
         //         p.log("h:" + h)
-        //         if (h > mbg.length - 1) {
+        //         if (h > bgPics.length - 1) {
         //           return
         //         }
         //         bg.setProperty(hmUI.prop.MORE, {
         //           type: h - 1
         //         })
-        //         fg.setProperty(hmUI.prop.MORE, {
+        //         frontPic.setProperty(hmUI.prop.MORE, {
         //           level: h - 1
         //         })
         //         //updateMoonFace()
@@ -2895,7 +1648,6 @@ try {
         //     p.log('ui pause')
         //   },
         // })
-
 
         var ks = {
           '0200': ' ',
@@ -2997,21 +1749,20 @@ try {
       },
       onInit() {
         this.init_view()
-        p.log("index page.js on init invoke");
+        logger.log("index page.js on init invoke");
       },
       build() {
-        this.init_view()
-        p.log("index page.js on ready invoke");
+        logger.log("index page.js on ready invoke");
       },
       onDestory() {
-        p.log("index page.js on destory invoke");
-        try {
-          timer.stopTimer(mainTimer)
-        } catch (e) { }
+        logger.log("index page.js on destory invoke");
       }
     });
   })();
 } catch (n) {
   console.log(n);
-  p.og(n)
+  try {
+    var logger2 = DeviceRuntimeCore.HmLogger.getLogger("WatchFace Plus");
+    logger2.log(n)
+  } catch (e) {}
 }
