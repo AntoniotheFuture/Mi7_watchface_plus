@@ -149,7 +149,7 @@ https://github.com/davidshimjs/qrcodejs
 由于时间仓促，代码会一些BUG和写得不合理的地方，望大家多多担待，我将会在日后的开发中逐渐完善和优化代码，以及UI。
 
 ## 视频演示
-将会发布在B站
+[bilibili](https://www.bilibili.com/video/BV1sG411s7me/)
 
 ## 已知问题
 1. 电量图标不能正确显示。
