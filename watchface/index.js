@@ -1058,22 +1058,22 @@ try {
           tou3: 0,
           tou4: 0,
           refresh:function(){
-            if(touCount > 0) {tou1 = Math.round(Math.random() * 5)}
-            if (touCount > 1) {tou2 = Math.round(Math.random() * 5)}
-            if (touCount > 2) {tou3 = Math.round(Math.random() * 5)}
-            if (touCount > 3) {tou4 = Math.round(Math.random() * 5)}
+            if (this.touCount > 0) { this.tou1 = Math.round(Math.random() * 5)}
+            if (this.touCount > 1) { this.tou2 = Math.round(Math.random() * 5)}
+            if (this.touCount > 2) { this.tou3 = Math.round(Math.random() * 5)}
+            if (this.touCount > 3) { this.tou4 = Math.round(Math.random() * 5)}
           },
           reset:function(){
-            game = 0;
-            tou1 = 0;
-            tou2 = 0;
-            tou3 = 0;
-            tou4 = 0;
+            this.game = 0;
+            this.tou1 = 0;
+            this.tou2 = 0;
+            this.tou3 = 0;
+            this.tou4 = 0;
           },
           changeTouCount:function(n){
-            touCount += n
-            if (touCount < 2) {touCount = 1;}
-            if (touCount > 3) {touCount = 4}
+            this.touCount += n
+            if (this.touCount < 2) { this.touCount = 1;}
+            if (this.touCount > 3) { this.touCount = 4}
           }
         }
 
@@ -1152,25 +1152,26 @@ try {
 
         refreshTou.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
           let t
+          touziGame.refresh()
           if (touziGame.touCount > 0) {
             t = touziGame.tou1 + 1
             tou1Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
-          if (touCount > 1) {
+          if (touziGame.touCount > 1) {
             t = touziGame.tou2 + 1
             tou2Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
-          if (touCount > 2) {
+          if (touziGame.touCount > 2) {
             t = touziGame.tou3 + 1
             tou3Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
             })
           }
-          if (touCount > 3) {
+          if (touziGame.touCount > 3) {
             t = touziGame.tou4 + 1
             tou4Img.setProperty(hmUI.prop.MORE, {
               src: 'tou/' + t + '.png'
