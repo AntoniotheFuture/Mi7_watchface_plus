@@ -1022,18 +1022,8 @@ try {
 
         function pushLog(log) {
           logStr += log
-          if (logStr.length > 150) {
-            logStr = logStr.substring(logStr.length - 150, 150)
-          }
-          logs.setProperty(hmUI.prop.MORE, {
-            text: logStr
-          })
-        }
-
-        function pushLog(log) {
-          logStr += log
-          if (logStr.length > 150) {
-            logStr = logStr.substring(logStr.length - 150, 150)
+          if (logStr.length > 160) {
+            logStr = logStr.substring(logStr.length - 150, 160)
           }
           logs.setProperty(hmUI.prop.MORE, {
             text: logStr
@@ -1593,6 +1583,7 @@ try {
               level: Math.floor(battery.current / 10)
             })
           }
+          pushLog('update bg\n')
         }
 
         pushLog('V1.1\n')
@@ -1605,7 +1596,7 @@ try {
         let lastStep = 0;
 
         step.addEventListener(hmSensor.event.CHANGE, function () {
-          if (step.current > lastStep + 100){
+          if (step.current > lastStep + 80 || step.current < lastStep){
             lastStep = step.current
             updateBG()
           }
