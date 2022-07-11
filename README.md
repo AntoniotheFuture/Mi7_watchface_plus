@@ -45,10 +45,11 @@ ____
 
 地址1：
 
-https://gitee.com/antonioliang/mi7_watchface_plus/releases
+https://github.com/AntoniotheFuture/Mi7_watchface_plus/releases
 
 地址2：
 
+https://www.bandbbs.cn/resources/1432/
 
 
 使用米坛社区的工具导入到您的小米手环7中：
