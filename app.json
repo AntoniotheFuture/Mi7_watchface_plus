@@ -5,12 +5,12 @@
       "appName": "增强版表盘",
       "appType": "watchface",
       "version": {
-          "code": 2,
-          "name": "1.1"
+          "code": 3,
+          "name": "1.2"
       },
       "icon": "1.png",
       "vender": "Antonio Future",
-      "description": "收款码/点数器/吃什么/骰子"
+      "description": "收款码/点数器/吃什么/骰子/节拍器"
   },
   "debug": true,
   "permissions": [],

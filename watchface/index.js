@@ -58,6 +58,8 @@ try {
     const orange = 0xfc512d;
     const btnPress = 0x555555;
 
+    const green = 0x8fc31f;
+
     let month_array = null
     let hour_array = null
     let week_array = null
@@ -71,7 +73,7 @@ try {
 
     let img_array = ['qr/alipay.png','qr/wechat.png']
 
-    moonArray = range(30).map((v) => {
+    moonArray = range(29).map((v) => {
       return `m/${v + 1}.png`
     })
     bgPics = range(8).map((v) => {
@@ -196,11 +198,21 @@ try {
           week_sc: week_array,
         })
 
-        const moonFace = WatchFace.createWidget(hmUI.widget.IMG, {
-          x: 157,
+        const moonFace = WatchFace.createWidget(hmUI.widget.IMG_LEVEL, {
+          x: 156,
           y: 100,
-          src: moonArray[0],
+          image_array: moonArray,
+          image_length: moonArray.length,
+          type: hmUI.data_type.MOON
         })
+        
+        // .createWidget(hmUI.widget.IMG, {
+        //   x: 157,
+        //   y: 100,
+        //   src: moonArray[0],
+        // })
+
+
 
         //-------------------------time----------------------------------
 
@@ -343,56 +355,6 @@ try {
           color: darkBG
         })
 
-        var apps = [{
-            text: '二维码1',
-            id: 1
-          },
-          {
-            text: '二维码2',
-            id: 2
-          },
-          {
-            text: '吃什么',
-            id: 4
-          },
-          {
-            text: '点数器',
-            id: 3
-          },
-          {
-            text: '骰子',
-            id: 7
-          },
-          {
-            text: '尺子',
-            id: 6
-          },
-          {
-            text: '关于',
-            id: 5
-          },
-        ]
-
-        for (let i = 0; i < apps.length; i++) {
-          const app = apps[i];
-          var m = menuGroup.createWidget(hmUI.widget.BUTTON, {
-            x: 5,
-            y: 70 + i % pageSize * 80,
-            w: fullWidth - 10,
-            h: 76,
-            press_color: lightBG,
-            normal_color: btnPress,
-            text: app['text'],
-            color: lightText,
-            text_size: 28,
-            radius: 48,
-            click_func: () => {
-              openApp(app['id'], )
-            }
-          })
-          menuItems.push(m)
-        }
-
         const nextPage = menuGroup.createWidget(hmUI.widget.IMG, {
           x: (fullWidth - iconBtnW) / 2,
           y: bottomBtnY,
@@ -416,1042 +378,1439 @@ try {
           }
           offset += pageSize;
         }
-        switchMenu()
 
         //---------------------------------wechat collect-------------------------------------
 
-        let showIndex1 = 0;
+        var qr1 = {
+          title: '二维码1',
+          showIndex: 0,
+          img: null,
+          group: null,
+          img: null,
+          nextBtn: null,
+          init: function () {
+            qr1.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
 
-        let app1Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app1Group, false)
+            setGroupVisible(qr1.group, false)
 
-        app1Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: lightText
-        })
+            qr1.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: lightText
+            })
 
-        app1Group.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 60,
-          w: fullWidth,
-          h: 50,
-          color: darkBG,
-          text: "二维码1",
-          text_size: titleFont,
-          text_style: hmUI.text_style.NONE,
-          align_h: hmUI.align.CENTER_H,
-        })
+            qr1.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 60,
+              w: fullWidth,
+              h: 50,
+              color: darkBG,
+              text: qr1.title,
+              text_size: titleFont,
+              text_style: hmUI.text_style.NONE,
+              align_h: hmUI.align.CENTER_H,
+            })
 
-        const img1 = app1Group.createWidget(hmUI.widget.IMG, {
-          x: 3,
-          y: 120,
-          src: 'qr/wechat.png',
-          w: 186,
-          h: 186,
-        })
+            qr1.img = qr1.group.createWidget(hmUI.widget.IMG, {
+              x: 3,
+              y: 120,
+              src: 'qr/wechat.png',
+              w: 186,
+              h: 186,
+            })
 
-        const nextImg1 = app1Group.createWidget(hmUI.widget.IMG, {
-          x: (fullWidth - iconBtnW) / 2,
-          y: bottomBtnY,
-          w: iconBtnW,
-          h: 50,
-          src: "next.png"
-        })
+            qr1.nextBtn = qr1.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "next.png"
+            })
 
-        nextImg1.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          showIndex1 ++;
-          if(showIndex1 >= img_array.length){
-            showIndex1 = 0
+            qr1.nextBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              qr1.showIndex++;
+              if (qr1.showIndex >= img_array.length) {
+                qr1.showIndex = 0
+              }
+              qr1.img.setProperty(hmUI.prop.MORE, {
+                src: img_array[qr1.showIndex]
+              })
+            })
           }
-          img1.setProperty(hmUI.prop.MORE,{
-            src:img_array[showIndex1]
-          })
-        })
+        }
 
         //-------------------------------- aplipay collect-------------------------------------
 
-        let showIndex2 = 0;
+        var qr2 = {
+          title: '二维码2',
+          showIndex: 0,
+          img: null,
+          group: null,
+          img: null,
+          nextBtn: null,
+          init: function () {
+            qr2.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
 
-        let app2Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app2Group, false)
+            setGroupVisible(qr2.group, false)
 
-        app2Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: lightText
-        })
+            qr2.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: lightText
+            })
 
-        app2Group.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 60,
-          w: fullWidth,
-          h: 50,
-          color: darkBG,
-          text: "二维码2",
-          text_size: titleFont,
-          text_style: hmUI.text_style.NONE,
-          align_h: hmUI.align.CENTER_H,
-        })
+            qr2.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 60,
+              w: fullWidth,
+              h: 50,
+              color: darkBG,
+              text: qr2.title,
+              text_size: titleFont,
+              text_style: hmUI.text_style.NONE,
+              align_h: hmUI.align.CENTER_H,
+            })
 
-        const img2 = app2Group.createWidget(hmUI.widget.IMG, {
-          x: 3,
-          y: 120,
-          src: 'qr/alipay.png',
-          w: 186,
-          h: 186,
-        })
+            qr2.img = qr2.group.createWidget(hmUI.widget.IMG, {
+              x: 3,
+              y: 120,
+              src: 'qr/alipay.png',
+              w: 186,
+              h: 186,
+            })
 
-        const nextImg2 = app2Group.createWidget(hmUI.widget.IMG, {
-          x: (fullWidth - iconBtnW) / 2,
-          y: bottomBtnY,
-          w: iconBtnW,
-          h: 50,
-          src: "next.png"
-        })
+            qr2.nextBtn = qr2.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "next.png"
+            })
 
-        nextImg2.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          showIndex2++;
-          if (showIndex2 >= img_array.length) {
-            showIndex2 = 0
+            qr2.nextBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              qr2.showIndex++;
+              if (qr2.showIndex >= img_array.length) {
+                qr2.showIndex = 0
+              }
+              qr2.img.setProperty(hmUI.prop.MORE, {
+                src: img_array[qr2.showIndex]
+              })
+            })
           }
-          img2.setProperty(hmUI.prop.MORE, {
-            src: img_array[showIndex2]
-          })
-        })
+        }
 
         //-------------------------------- counter-------------------------------------
+        var counter = {
+          title: '点数器',
+          count: 0,
+          doVibrate: true,
+          group: null,
+          switchVibrate: null,
+          countText: null,
+          addCount: null,
+          init: function () {
+            counter.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(counter.group, false)
 
-        let count = 0;
-        let doVibrate = true;
+            counter.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
 
-        let app3Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app3Group, false)
+            counter.group.createWidget(hmUI.widget.BUTTON, {
+              x: 45,
+              y: 60,
+              w: 102,
+              h: 50,
+              text: '归零',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                if (pages[pages.length - 1] != counter.title) {
+                  return
+                }
+                counter.count = 0;
+                counter.countText.setProperty(hmUI.prop.MORE, {
+                  text: counter.count
+                });
+              }
+            })
 
-        app3Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-        app3Group.createWidget(hmUI.widget.BUTTON, {
-          x: 45,
-          y: 60,
-          w: 102,
-          h: 50,
-          text: '归零',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            if (pages[pages.length - 1] != "app3") {
-              return
-            }
-            count = 0;
-            countText.setProperty(hmUI.prop.MORE, {
-              text: count
-            });
-          }
-        })
-
-        const switchVibrate = app3Group.createWidget(hmUI.widget.BUTTON, {
-          x: 45,
-          y: 120,
-          w: 102,
-          h: 50,
-          text: '震动开',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            if (pages[pages.length - 1] != "app3") {
-              return
-            }
-            doVibrate = !doVibrate;
-            switchVibrate.setProperty(hmUI.prop.MORE, {
-              text: '震动' + (doVibrate ? '开' : '关'),
+            counter.switchVibrate = counter.group.createWidget(hmUI.widget.BUTTON, {
               x: 45,
               y: 120,
               w: 102,
               h: 50,
+              text: '震动开',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                if (pages[pages.length - 1] != counter.title) {
+                  return
+                }
+                counter.doVibrate = !counter.doVibrate;
+                counter.switchVibrate.setProperty(hmUI.prop.MORE, {
+                  text: '震动' + (counter.doVibrate ? '开' : '关'),
+                  x: 45,
+                  y: 120,
+                  w: 102,
+                  h: 50,
+                })
+              }
+            })
+
+            counter.countText = counter.group.createWidget(hmUI.widget.TEXT, {
+              x: 2,
+              y: 172,
+              w: fullWidth - 4,
+              h: 70,
+              align_h: hmUI.align.CENTER_H,
+              align_v: hmUI.align.CENTER_V,
+              text_size: 56,
+              color: gold,
+              text: 0
+            })
+
+            counter.addCount = counter.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 242,
+              w: fullWidth,
+              h: 250,
+              radius: fullWidth / 2,
+              color: 0x191970,
+            })
+
+            counter.group.createWidget(hmUI.widget.TEXT, {
+              x: 2,
+              y: 250,
+              w: fullWidth - 4,
+              h: 18,
+              text_size: smallFont,
+              color: secondText,
+              align_h: hmUI.align.CENTER_H,
+              align_v: hmUI.align.CENTER_V,
+              text: "点击+1"
+            })
+
+
+            counter.addCount.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if (pages[pages.length - 1] != counter.title) {
+                return
+              }
+              counter.count++;
+              if (counter.doVibrate) {
+                try {
+                  vibrate.motorenable = 1
+                  vibrate.crowneffecton = 1
+                  vibrate.scene = 23
+                
+                  vibrate.stop()
+                  vibrate.start()
+                } catch (e) {
+                  showToast('不支持震动\n')
+                }
+              }
+              counter.countText.setProperty(hmUI.prop.MORE, {
+                text: counter.count
+              });
             })
           }
-        })
-
-        const countText = app3Group.createWidget(hmUI.widget.TEXT, {
-          x: 2,
-          y: 172,
-          w: fullWidth - 4,
-          h: 70,
-          align_h: hmUI.align.CENTER_H,
-          align_v: hmUI.align.CENTER_V,
-          text_size: 56,
-          color: gold,
-          text: 0
-        })
-
-        const addCount = app3Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 242,
-          w: fullWidth,
-          h: 250,
-          radius: fullWidth / 2,
-          color: 0x191970,
-        })
-
-        app3Group.createWidget(hmUI.widget.TEXT, {
-          x: 2,
-          y: 250,
-          w: fullWidth - 4,
-          h: 18,
-          text_size: smallFont,
-          color: secondText,
-          align_h: hmUI.align.CENTER_H,
-          align_v: hmUI.align.CENTER_V,
-          text: "点击+1"
-        })
-
-
-        addCount.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app3") {
-            return
-          }
-          count++;
-          if (doVibrate) {
-            vibrate.motorenable = 1
-            vibrate.crowneffecton = 1
-            vibrate.scene = 2
-            try {
-              vibrate.stop()
-              vibrate.start()
-            } catch (e) {
-              showToast('不支持震动\n')
-            }
-          }
-          countText.setProperty(hmUI.prop.MORE, {
-            text: count
-          });
-        })
+        }
 
         //--------------------------------eat what-------------------------------------
 
-        let fastFoods = ['云吞', '拉面', '烧烤', '米线', '螺蛳粉', '汉堡', '炸鸡', '披萨', '寿司', '手抓饼', '海鲜粥', '羊肉粉', '牛杂', '焗饭', '黄焖鸡',
-          '猪脚饭', '白切鸡', '葱油鸡', '烧鸭饭', '烧鹅饭', '麻辣烫', '泡面', '盖浇饭', '泡馍', '麻辣香锅', '刀削面', '热干面', '桂林米粉', '酸辣粉', '饺子',
-          '脆皮鸡饭', '关东煮', '凉皮', '烤肉拌饭', '包子', '馄饨', '炸酱面', '卤菜', '煲仔饭', '重庆小面', '意大利面', '酸菜鱼', '炒饭', '炒粉', '咖喱饭'
-        ];
-        let dinners = ['牛扒', '水煮鱼', '牛肉火锅', '日料', '烤鱼', '海鲜火锅', '冒菜', '海鲜自助', '烤肉自助', '韩国菜', '泰国菜', '北京菜', '麻辣火锅',
-          '粤菜', '川菜', '东北菜', '云南菜', '江浙菜', '西北菜', '山东菜', '徽菜', '贵州菜', '台湾菜', '江西菜', '茶餐厅', '法国大餐', '鱼火锅', '酸菜鱼', '小龙虾'
-        ];
-        let fastFoodsStat = [];
-        let dinnersStat = [];
-        let fastfoodIndex = 0;
-        let dinnerIndex = 1;
+        var eatWhat = {
+          title: '吃什么',
+          group: null,
+          fastfood: {
+            options: ['云吞', '拉面', '烧烤', '米线', '螺蛳粉', '汉堡', '炸鸡', '披萨', '寿司', '手抓饼', '海鲜粥', '羊肉粉', '牛杂', '焗饭', '黄焖鸡',
+              '猪脚饭', '白切鸡', '葱油鸡', '烧鸭饭', '烧鹅饭', '麻辣烫', '泡面', '盖浇饭', '泡馍', '麻辣香锅', '刀削面', '热干面', '桂林米粉', '酸辣粉', '饺子',
+              '脆皮鸡饭', '关东煮', '凉皮', '烤肉拌饭', '包子', '馄饨', '炸酱面', '卤菜', '煲仔饭', '重庆小面', '意大利面', '酸菜鱼', '炒饭', '炒粉', '咖喱饭'
+            ],
+            stats: [],
+            index: 0,
+            group:null,
+            text: null,
+            count: null,
+            refreshBtn: null,
+            updateCount: function () {
+              eatWhat.fastfood.count.setProperty(hmUI.prop.MORE, {
+                text: eatWhat.fastfood.stats[eatWhat.fastfood.index + ''] ? '已选' + eatWhat.fastfood.stats[eatWhat.fastfood.index + ''] + '次' : '还没选过'
+              });
+            }
+          },
+          dinner: {
+            options: ['牛扒', '水煮鱼', '牛肉火锅', '日料', '烤鱼', '海鲜火锅', '冒菜', '海鲜自助', '烤肉自助', '韩国菜', '泰国菜', '北京菜', '麻辣火锅',
+              '粤菜', '川菜', '东北菜', '云南菜', '江浙菜', '西北菜', '山东菜', '徽菜', '贵州菜', '台湾菜', '江西菜', '茶餐厅', '法国大餐', '鱼火锅', '酸菜鱼', '小龙虾'
+            ],
+            stats: [],
+            index: 0,
+            group: null,
+            text: null,
+            count: null,
+            refreshBtn: null,
+            updateCount: function () {
+              eatWhat.dinner.count.setProperty(hmUI.prop.MORE, {
+                text: eatWhat.dinner.stats[eatWhat.dinner.index + ''] ? '已选' + eatWhat.dinner.stats[eatWhat.dinner.index + ''] + '次' : '还没选过'
+              });
+            }
+          },
+          init: function () {
+            eatWhat.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(eatWhat.group, false)
 
+            eatWhat.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
 
-        let app4Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app4Group, false)
+            eatWhat.group.createWidget(hmUI.widget.BUTTON, {
+              x: 5,
+              y: 130,
+              w: fullWidth - 10,
+              h: 76,
+              radius: 38,
+              press_color: lightBG,
+              normal_color: btnPress,
+              text: '快餐',
+              color: lightText,
+              text_size: 28,
+              click_func: () => {
+                eatWhat.gotoFastfood()
+              }
+            })
 
-        app4Group.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
+            eatWhat.group.createWidget(hmUI.widget.BUTTON, {
+              x: 5,
+              y: 250,
+              w: fullWidth - 10,
+              h: 76,
+              radius: 38,
+              press_color: lightBG,
+              normal_color: btnPress,
+              text: '正餐',
+              color: lightText,
+              text_size: 28,
+              click_func: () => {
+                eatWhat.gotoDinner()
+              }
+            })
 
-        app4Group.createWidget(hmUI.widget.BUTTON, {
-          x: 5,
-          y: 130,
-          w: fullWidth - 10,
-          h: 76,
-          radius: 38,
-          press_color: lightBG,
-          normal_color: btnPress,
-          text: '快餐',
-          color: lightText,
-          text_size: 28,
-          click_func: () => {
-            gotoFastfood()
-          }
-        })
+            eatWhat.fastfood.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
 
-        app4Group.createWidget(hmUI.widget.BUTTON, {
-          x: 5,
-          y: 250,
-          w: fullWidth - 10,
-          h: 76,
-          radius: 38,
-          press_color: lightBG,
-          normal_color: btnPress,
-          text: '正餐',
-          color: lightText,
-          text_size: 28,
-          click_func: () => {
-            gotoDinner()
-          }
-        })
+            setGroupVisible(eatWhat.fastfood.group, false)
 
-        let fastfoodGroup = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(fastfoodGroup, false)
+            eatWhat.fastfood.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
 
-        fastfoodGroup.createWidget(hmUI.widget.FILL_RECT, { // 自定义组件容器
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
+            eatWhat.fastfood.text = eatWhat.fastfood.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 200,
+              w: fullWidth,
+              h: 50,
+              align_h: hmUI.align.CENTER_H,
+              text_size: titleFont,
+              color: gold,
+              text: '云吞'
+            })
 
-        const fastfoodText = fastfoodGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 200,
-          w: fullWidth,
-          h: 50,
-          align_h: hmUI.align.CENTER_H,
-          text_size: titleFont,
-          color: gold,
-          text: '云吞'
-        })
+            eatWhat.fastfood.count = eatWhat.fastfood.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 280,
+              w: fullWidth,
+              h: 50,
+              align_h: hmUI.align.CENTER_H,
+              text_size: normalFont,
+              color: lightText,
+              text: '还没选过'
+            })
 
-        const fastfoodCount = fastfoodGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 280,
-          w: fullWidth,
-          h: 50,
-          align_h: hmUI.align.CENTER_H,
-          text_size: normalFont,
-          color: lightText,
-          text: '还没选过'
-        })
+            eatWhat.fastfood.group.createWidget(hmUI.widget.BUTTON, {
+              x: 45,
+              y: 100,
+              w: 102,
+              h: 50,
+              text: '选择',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                if (pages[pages.length - 1] != "fastfood") {
+                  return
+                }
+                if (eatWhat.fastfood.index == -1) {
+                  return
+                }
+                if (typeof (eatWhat.fastfood.stats[eatWhat.fastfood.index + '']) == 'undefined') {
+                  eatWhat.fastfood.stats[eatWhat.fastfood.index + ''] = 0;
+                } else {
+                  eatWhat.fastfood.stats[eatWhat.fastfood.index + '']++;
+                }
+                eatWhat.fastfood.updateCount()
+              }
+            })
 
-        fastfoodGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 45,
-          y: 100,
-          w: 102,
-          h: 50,
-          text: '选择',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            if (pages[pages.length - 1] != "fastfood") {
+            eatWhat.fastfood.refreshBtn = eatWhat.fastfood.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "refresh.png"
+            })
+
+            eatWhat.fastfood.refreshBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if (pages[pages.length - 1] != "fastfood") {
+                return
+              }
+              eatWhat.fastfood.index = Math.round(Math.random() * eatWhat.fastfood.options.length)
+              eatWhat.fastfood.updateCount()
+              eatWhat.fastfood.text.setProperty(hmUI.prop.MORE, {
+                text: eatWhat.fastfood.options[eatWhat.fastfood.index]
+              });
+            })
+
+            eatWhat.dinner.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+
+            setGroupVisible(eatWhat.dinner.group, false)
+
+            eatWhat.dinner.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
+
+            eatWhat.dinner.text = eatWhat.dinner.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 200,
+              w: fullWidth,
+              h: 100,
+              align_h: hmUI.align.CENTER_H,
+              text_size: titleFont,
+              color: gold,
+              text: '水煮鱼'
+            })
+
+            eatWhat.dinner.count = eatWhat.dinner.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 280,
+              w: fullWidth,
+              h: 50,
+              align_h: hmUI.align.CENTER_H,
+              text_size: normalFont,
+              color: lightText,
+              text: '还没选过'
+            })
+
+            eatWhat.dinner.group.createWidget(hmUI.widget.BUTTON, {
+              x: 60,
+              y: 100,
+              w: 72,
+              h: 50,
+              text: '选择',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                if (pages[pages.length - 1] != "dinner") {
+                  return
+                }
+                if (eatWhat.dinner.index == -1) {
+                  return
+                }
+                if (typeof (eatWhat.dinner.stats[eatWhat.dinner.index + '']) == 'undefined') {
+                  eatWhat.dinner.stats[eatWhat.dinner.index + ''] = 0;
+                } else {
+                  eatWhat.dinner.stats[eatWhat.dinner.index + '']++;
+                }
+                eatWhat.dinner.updateCount()
+              }
+            })
+
+            eatWhat.dinner.refreshBtn = eatWhat.dinner.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "refresh.png"
+            })
+
+            eatWhat.dinner.refreshBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if (pages[pages.length - 1] != "dinner") {
+                return
+              }
+              eatWhat.dinner.index = Math.round(Math.random() * eatWhat.dinner.options.length)
+              eatWhat.dinner.updateCount()
+              eatWhat.dinner.text.setProperty(hmUI.prop.MORE, {
+                text: eatWhat.dinner.options[eatWhat.dinner.index]
+              });
+            })
+
+          },
+          gotoFastfood: function () {
+            if (pages[pages.length - 1] != eatWhat.title) {
               return
             }
-            if (fastfoodIndex == -1) {
+            goin(eatWhat.fastfood.group)
+            pages.push('fastfood')
+          },
+          gotoDinner: function () {
+            if (pages[pages.length - 1] != eatWhat.title) {
               return
             }
-            if (typeof (fastFoodsStat[fastfoodIndex + '']) == 'undefined') {
-              fastFoodsStat[fastfoodIndex + ''] = 0;
-            } else {
-              fastFoodsStat[fastfoodIndex + '']++;
-            }
-            updateFastFoodCount()
-          }
-        })
-
-        const refreshFastfood = fastfoodGroup.createWidget(hmUI.widget.IMG, {
-          x: (fullWidth - iconBtnW) / 2,
-          y: bottomBtnY,
-          w: iconBtnW,
-          h: 50,
-          src: "refresh.png"
-        })
-
-        refreshFastfood.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "fastfood") {
-            return
-          }
-          fastfoodIndex = Math.round(Math.random() * fastFoods.length)
-          updateFastFoodCount()
-          fastfoodText.setProperty(hmUI.prop.MORE, {
-            text: fastFoods[fastfoodIndex]
-          });
-        })
-
-        function updateFastFoodCount() {
-          fastfoodCount.setProperty(hmUI.prop.MORE, {
-            text: fastFoodsStat[fastfoodIndex + ''] ? '已选' + fastFoodsStat[fastfoodIndex + ''] + '次' : '还没选过'
-          });
-        }
-
-        let dinnerGroup = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(dinnerGroup, false)
-
-        dinnerGroup.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-        const dinnerText = dinnerGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 200,
-          w: fullWidth,
-          h: 100,
-          align_h: hmUI.align.CENTER_H,
-          text_size: titleFont,
-          color: gold,
-          text: '水煮鱼'
-        })
-
-        const dinnerCount = dinnerGroup.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 280,
-          w: fullWidth,
-          h: 50,
-          align_h: hmUI.align.CENTER_H,
-          text_size: normalFont,
-          color: lightText,
-          text: '还没选过'
-        })
-
-        dinnerGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 60,
-          y: 100,
-          w: 72,
-          h: 50,
-          text: '选择',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            if (pages[pages.length - 1] != "dinner") {
-              return
-            }
-            if (dinnerIndex == -1) {
-              return
-            }
-            if (typeof (dinnersStat[dinnerIndex + '']) == 'undefined') {
-              dinnersStat[dinnerIndex + ''] = 0;
-            } else {
-              dinnersStat[dinnerIndex + '']++;
-            }
-            updateDinnerCount()
-          }
-        })
-
-        
-        const refreshDinner = dinnerGroup.createWidget(hmUI.widget.IMG, { //小程序图标
-          x: (fullWidth - iconBtnW) / 2,
-          y: bottomBtnY,
-          w: iconBtnW,
-          h: 50,
-          src: "refresh.png"
-        })
-
-        refreshDinner.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "dinner") {
-            return
-          }
-          dinnerIndex = Math.round(Math.random() * dinners.length)
-          updateDinnerCount()
-          dinnerText.setProperty(hmUI.prop.MORE, {
-            text: dinners[dinnerIndex]
-          });
-        })
-
-
-        function updateDinnerCount() {
-          dinnerCount.setProperty(hmUI.prop.MORE, {
-            text: dinnersStat[dinnerIndex + ''] ? '已选' + dinnersStat[dinnerIndex + ''] + '次' : '还没选过'
-          });
-        }
-
-        function gotoFastfood() {
-          if (pages[pages.length - 1] != "app4") {
-            return
-          }
-          goin(fastfoodGroup)
-          pages.push('fastfood')
-        }
-
-        function gotoDinner() {
-          if (pages[pages.length - 1] != "app4") {
-            return
-          }
-          goin(dinnerGroup)
-          pages.push('dinner')
+            goin(eatWhat.dinner.group)
+            pages.push('dinner')
+          },
         }
 
         //--------------------------------about -------------------------------------
+        var about = {
+          title: '关于',
+          group: null,
+          logStr: 'log:',
+          logNav:null,
+          logBg:null,
+          logs:null,
+          pushLog: function (log){
+            about.logStr += log
+            if (about.logStr.length > 160) {
+              about.logStr = about.logStr.substring(about.logStr.length - 150, 160)
+            }
+            about.logs.setProperty(hmUI.prop.MORE, {
+              text: about.logStr
+            })
+          },
+          init:function(){
+            about.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(about.group, false)
 
-        let logStr = 'log:'
+            about.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
 
-        let app5Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app5Group, false)
+            about.group.createWidget(hmUI.widget.TEXT, {
+              x: 5,
+              y: 80,
+              w: fullWidth - 10,
+              h: 32,
+              text: '增强版表盘',
+              text_size: titleFont,
+              color: lightText,
+              text_style: hmUI.text_style.NONE
+            })
 
-        app5Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
+            about.group.createWidget(hmUI.widget.TEXT, {
+              x: 5,
+              y: 110,
+              w: fullWidth - 10,
+              h: 24,
+              text: '开发者：梁小蜗',
+              text_size: smallFont,
+              color: orange,
+              text_style: hmUI.text_style.WRAP
+            })
 
-        app5Group.createWidget(hmUI.widget.TEXT, {
-          x: 5,
-          y: 80,
-          w: fullWidth - 10,
-          h: 32,
-          text: '增强版表盘',
-          text_size: titleFont,
-          color: lightText,
+            about.group.createWidget(hmUI.widget.TEXT, {
+              x: 5,
+              y: 140,
+              w: fullWidth - 10,
+              h: 80,
+              text: '这是免费开源软件，如果您付费了，请联系卖家退款',
+              align_h: hmUI.align.LEFT,
+              text_size: smallFont,
+              color: lightText,
+              text_style: hmUI.text_style.WRAP
+            })
 
-          text_style: hmUI.text_style.NONE
-        })
+            about.logNav = about.group.createWidget(hmUI.widget.IMG, {
+              x: 5,
+              y: 250,
+              w: fullWidth - 10,
+              h: 200,
+              src: 'qr.png'
+            })
 
-        app5Group.createWidget(hmUI.widget.TEXT, {
-          x: 5,
-          y: 110,
-          w: fullWidth - 10,
-          h: 24,
-          text: '开发者：梁小蜗',
-          text_size: smallFont,
-          color: orange,
-          text_style: hmUI.text_style.WRAP
-        })
+            about.logBg = about.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
 
-        app5Group.createWidget(hmUI.widget.TEXT, {
-          x: 5,
-          y: 140,
-          w: fullWidth - 10,
-          h: 80,
-          text: '这是免费开源软件，如果您付费了，请联系卖家退款',
-          align_h: hmUI.align.LEFT,
-          text_size: smallFont,
-          color: lightText,
-          text_style: hmUI.text_style.WRAP
-        })
+            about.logs = about.group.createWidget(hmUI.widget.TEXT, {
+              x: 0,
+              y: 80,
+              w: fullWidth - 10,
+              h: fullHeight - 80,
+              text: 'log:',
+              align_h: hmUI.align.LEFT,
+              text_size: tinyFont,
+              color: lightText,
+              text_style: hmUI.text_style.WRAP
+            })
+            about.logBg.setProperty(hmUI.prop.VISIBLE, false)
+            about.logs.setProperty(hmUI.prop.VISIBLE, false)
 
-        const logNav = app5Group.createWidget(hmUI.widget.IMG, {
-          x: 5,
-          y: 250,
-          w: fullWidth - 10,
-          h: 200,
-          src: 'qr.png'
-        })
+            about.logNav.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if (pages[pages.length - 1] != about.title) {
+                return
+              }
+              about.logBg.setProperty(hmUI.prop.VISIBLE, true)
+              about.logs.setProperty(hmUI.prop.VISIBLE, true)
+            })
 
-        const logBg = app5Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
 
-        const logs = app5Group.createWidget(hmUI.widget.TEXT, {
-          x: 0,
-          y: 80,
-          w: fullWidth - 10,
-          h: fullHeight - 80,
-          text: 'log:',
-          align_h: hmUI.align.LEFT,
-          text_size: tinyFont,
-          color: lightText,
-          text_style: hmUI.text_style.WRAP
-        })
 
-        logBg.setProperty(hmUI.prop.VISIBLE, false)
-        logs.setProperty(hmUI.prop.VISIBLE, false)
-
-        logNav.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app5") {
-            return
           }
-          logBg.setProperty(hmUI.prop.VISIBLE, true)
-          logs.setProperty(hmUI.prop.VISIBLE, true)
-        })
-        logs.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          if (pages[pages.length - 1] != "app5") {
-            return
-          }
-          logBg.setProperty(hmUI.prop.VISIBLE, false)
-          logs.setProperty(hmUI.prop.VISIBLE, false)
-        })
-
-        function pushLog(log) {
-          logStr += log
-          if (logStr.length > 160) {
-            logStr = logStr.substring(logStr.length - 150, 160)
-          }
-          logs.setProperty(hmUI.prop.MORE, {
-            text: logStr
-          })
         }
-
         //--------------------------------ruler-------------------------------------
 
-        let app6Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app6Group, false)
+        var ruler = {
+          title:'尺子',
+          group:null,
+          init:function(){
+            ruler.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(ruler.group, false)
 
-        app6Group.createWidget(hmUI.widget.IMG, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          src: 'ruler.png'
-        })
+            ruler.group.createWidget(hmUI.widget.IMG, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              src: 'ruler.png'
+            })
+          }
+        }
+
 
         //--------------------------------touzi-------------------------------------
-  
-        let touziGame = {
-          game : 0,
-          touCount: 4,
-          tou1: 0,
-          tou2: 0,
-          tou3: 0,
-          tou4: 0,
-          refresh:function(){
-            if (this.touCount > 0) { this.tou1 = Math.round(Math.random() * 5)}
-            if (this.touCount > 1) { this.tou2 = Math.round(Math.random() * 5)}
-            if (this.touCount > 2) { this.tou3 = Math.round(Math.random() * 5)}
-            if (this.touCount > 3) { this.tou4 = Math.round(Math.random() * 5)}
+        
+        var touzi = {
+          title:'骰子',
+          group:null,
+          touziGame:{
+            game: 0,
+            touCount: 4,
+            tou1: 0,
+            tou2: 0,
+            tou3: 0,
+            tou4: 0,
+            refresh: function () {
+              if (this.touCount > 0) { this.tou1 = Math.round(Math.random() * 5) }
+              if (this.touCount > 1) { this.tou2 = Math.round(Math.random() * 5) }
+              if (this.touCount > 2) { this.tou3 = Math.round(Math.random() * 5) }
+              if (this.touCount > 3) { this.tou4 = Math.round(Math.random() * 5) }
+            },
+            reset: function () {
+              this.game = 0;
+              this.tou1 = 0;
+              this.tou2 = 0;
+              this.tou3 = 0;
+              this.tou4 = 0;
+            },
+            changeTouCount: function (n) {
+              this.touCount += n
+              if (this.touCount < 2) { this.touCount = 1; }
+              if (this.touCount > 3) { this.touCount = 4 }
+            }
           },
-          reset:function(){
-            this.game = 0;
-            this.tou1 = 0;
-            this.tou2 = 0;
-            this.tou3 = 0;
-            this.tou4 = 0;
+          touStat:null,
+          editGroup:null,
+          imgs:{
+            tou1:null,
+            tou2:null,
+            tou3:null,
+            tou4:null
           },
-          changeTouCount:function(n){
-            this.touCount += n
-            if (this.touCount < 2) { this.touCount = 1;}
-            if (this.touCount > 3) { this.touCount = 4}
+          ruleStr:null,
+
+          refreshTou:null,
+          updateGameStat:function(){
+            touzi.touziGame.game++;
+            var total = 0;
+            total += (touzi.touziGame.touCount > 0 ? (touzi.touziGame.tou1 + 1) : 0)
+            total += (touzi.touziGame.touCount > 1 ? (touzi.touziGame.tou2 + 1) : 0)
+            total += (touzi.touziGame.touCount > 2 ? (touzi.touziGame.tou3 + 1) : 0)
+            total += (touzi.touziGame.touCount > 3 ? (touzi.touziGame.tou4 + 1) : 0)
+            touzi.touStat.setProperty(hmUI.prop.MORE, {
+              x: 21,
+              y: 60,
+              w: 150,
+              h: 80,
+              text: '第' + touzi.touziGame.game + '轮\n总点数' + total,
+            })
+          },
+          updateTouCount:function(){
+            touzi.imgs.tou1.setProperty(hmUI.prop.VISIBLE, touzi.touziGame.touCount > 0)
+            touzi.imgs.tou2.setProperty(hmUI.prop.VISIBLE, touzi.touziGame.touCount > 1)
+            touzi.imgs.tou3.setProperty(hmUI.prop.VISIBLE, touzi.touziGame.touCount > 2)
+            touzi.imgs.tou4.setProperty(hmUI.prop.VISIBLE, touzi.touziGame.touCount > 3)
+          },
+          init:function(){
+            touzi.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(touzi.group, false)
+
+            touzi.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
+
+            touzi.touStat = touzi.group.createWidget(hmUI.widget.BUTTON, {
+              x: 21,
+              y: 60,
+              w: 150,
+              h: 80,
+              text: '第1轮\n总点数0',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                goin(touzi.editGroup)
+                pages.push('rules')
+              }
+            })
+
+            touzi.imgs.tou1 = touzi.group.createWidget(hmUI.widget.IMG, {
+              x: 10,
+              y: 150,
+              w: 81,
+              h: 81,
+              src: 'tou/6.png'
+            })
+
+            touzi.imgs.tou2 = touzi.group.createWidget(hmUI.widget.IMG, {
+              x: 101,
+              y: 150,
+              w: 81,
+              h: 81,
+              src: 'tou/6.png'
+            })
+
+            touzi.imgs.tou3 = touzi.group.createWidget(hmUI.widget.IMG, {
+              x: 10,
+              y: 241,
+              w: 81,
+              h: 81,
+              src: 'tou/6.png'
+            })
+
+            touzi.imgs.tou4 = touzi.group.createWidget(hmUI.widget.IMG, {
+              x: 101,
+              y: 241,
+              w: 81,
+              h: 81,
+              src: 'tou/6.png'
+            })
+
+            touzi.refreshTou = touzi.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "refresh.png"
+            })
+
+            touzi.refreshTou.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              let t
+              touzi.touziGame.refresh()
+              if (touzi.touziGame.touCount > 0) {
+                t = touzi.touziGame.tou1 + 1
+                touzi.imgs.tou1.setProperty(hmUI.prop.MORE, {
+                  src: 'tou/' + t + '.png'
+                })
+              }
+              if (touzi.touziGame.touCount > 1) {
+                t = touzi.touziGame.tou2 + 1
+                touzi.imgs.tou2.setProperty(hmUI.prop.MORE, {
+                  src: 'tou/' + t + '.png'
+                })
+              }
+              if (touzi.touziGame.touCount > 2) {
+                t = touzi.touziGame.tou3 + 1
+                touzi.imgs.tou3.setProperty(hmUI.prop.MORE, {
+                  src: 'tou/' + t + '.png'
+                })
+              }
+              if (touzi.touziGame.touCount > 3) {
+                t = touzi.touziGame.tou4 + 1
+                touzi.imgs.tou4.setProperty(hmUI.prop.MORE, {
+                  src: 'tou/' + t + '.png'
+                })
+              }
+              touzi.updateGameStat()
+            })
+
+
+            touzi.editGroup = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(touzi.editGroup, false)
+
+            touzi.editGroup.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
+
+            touzi.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: 21,
+              y: 60,
+              w: 150,
+              h: 80,
+              text: '重置游戏',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                touzi.touziGame.reset()
+                touzi.updateGameStat()
+                showToast('重置完毕')
+              }
+            })
+
+            touzi.ruleStr = touzi.editGroup.createWidget(hmUI.widget.TEXT, {
+              x: 21,
+              y: 150,
+              w: 150,
+              h: 40,
+              text: '骰子数量：4',
+              color: lightText,
+              text_size: normalFont
+            })
+
+            touzi.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: 10,
+              y: 240,
+              w: 81,
+              h: 75,
+              text: '-1',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                touzi.touziGame.changeTouCount(-1)
+                touzi.updateTouCount()
+                touzi.ruleStr.setProperty(hmUI.prop.MORE, {
+                  text: '骰子数量：' + touzi.touziGame.touCount
+                })
+              }
+            })
+
+            touzi.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: 101,
+              y: 240,
+              w: 81,
+              h: 75,
+              text: '+1',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: normalFont,
+              radius: 15,
+              click_func: () => {
+                touzi.touziGame.changeTouCount(1)
+                touzi.updateTouCount()
+                touzi.ruleStr.setProperty(hmUI.prop.MORE, {
+                  text: '骰子数量：' + touzi.touziGame.touCount
+                })
+              }
+            })
           }
         }
 
-        let app7Group = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app7Group, false)
-
-        app7Group.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-        const touStat = app7Group.createWidget(hmUI.widget.BUTTON, {
-          x: 21,
-          y: 60,
-          w: 150,
-          h: 80,
-          text: '第1轮\n总点数0',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            goin(app7EditGroup)
-            pages.push('rules')
-          }
-        })
-
-        const tou1Img = app7Group.createWidget(hmUI.widget.IMG, {
-          x: 10,
-          y: 150,
-          w: 81,
-          h: 81,
-          src: 'tou/6.png'
-        })
-
-        const tou2Img = app7Group.createWidget(hmUI.widget.IMG, {
-          x: 101,
-          y: 150,
-          w: 81,
-          h: 81,
-          src: 'tou/6.png'
-        })
-
-        const tou3Img = app7Group.createWidget(hmUI.widget.IMG, {
-          x: 10,
-          y: 241,
-          w: 81,
-          h: 81,
-          src: 'tou/6.png'
-        })
-
-        const tou4Img = app7Group.createWidget(hmUI.widget.IMG, {
-          x: 101,
-          y: 241,
-          w: 81,
-          h: 81,
-          src: 'tou/6.png'
-        })
-
-        const refreshTou = app7Group.createWidget(hmUI.widget.IMG, {
-          x: (fullWidth - iconBtnW) / 2,
-          y: bottomBtnY,
-          w: iconBtnW,
-          h: 50,
-          src: "refresh.png"
-        })
-
-        refreshTou.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-          let t
-          touziGame.refresh()
-          if (touziGame.touCount > 0) {
-            t = touziGame.tou1 + 1
-            tou1Img.setProperty(hmUI.prop.MORE, {
-              src: 'tou/' + t + '.png'
+        //--------------------------------Metronome-------------------------------------
+        var metronome = {
+          title:'节拍器',
+          bpm:88,
+          group:null,
+          editGroup:null,
+          editBtn:null,
+          playBtn:null,
+          meters:[],
+          timer:null,
+          vibrateLevel:2,
+          switchVibrate:null,
+          current:0,
+          t:0,
+          edit:{
+            bpm:null
+          },
+          resetMeters:function(){
+            for (let i = 0; i < metronome.meters.length ; i++) {
+              const element = metronome.meters[i];
+              element.setProperty(hmUI.prop.MORE, {
+                x: i < 4 ? 5 : 105,
+                y: i % 4 * 60 + 166,
+                w: 85,
+                h: 55,
+                color: 0x505050,
+              })
+            }
+          },
+          updateMeters:function(){
+            var element = metronome.meters[metronome.current]
+            var i = metronome.current
+            if (metronome.current == 0 || metronome.current == 4){
+              element.setProperty(hmUI.prop.MORE, {
+                x: i < 4 ? 5 : 105,
+                y: i % 4 * 60 + 166,
+                w: 85,
+                h: 55,
+                color: gold,
+              })
+              if (metronome.vibrateLevel > 0){
+                var vscene = 24
+                switch(metronome.vibrateLevel){
+                  case 1:vscene = 23;break;
+                  case 2: vscene = 24; break;
+                  case 3: vscene = 25; break;
+                  default:break;
+                }
+                try {
+                  vibrate.motorenable = 1
+                  vibrate.crowneffecton = 1
+                  vibrate.scene = vscene
+                
+                  vibrate.stop()
+                  vibrate.start()
+                } catch (e) {
+                  showToast('不支持震动\n')
+                }
+              }
+            }else{
+              element.setProperty(hmUI.prop.MORE, {
+                x: i < 4 ? 5 : 105,
+                y: i % 4 * 60 + 166,
+                w: 85,
+                h: 55,
+                color: green,
+              })
+            }
+          },
+          editBpm:function(x){
+            metronome.bpm += x
+            if(metronome.bpm > 240){
+              metronome.bpm = 240
+            }
+            if (metronome.bpm < 1) {
+              metronome.bpm = 1
+            }
+            metronome.edit.bpm.setProperty(hmUI.prop.MORE, {
+              text: 'BPM：' + metronome.bpm
             })
-          }
-          if (touziGame.touCount > 1) {
-            t = touziGame.tou2 + 1
-            tou2Img.setProperty(hmUI.prop.MORE, {
-              src: 'tou/' + t + '.png'
+            metronome.editBtn.setProperty(hmUI.prop.MORE, {
+              text: metronome.bpm,
+              x: 21,
+              y: 60,
+              w: 150,
+              h: 80,
             })
-          }
-          if (touziGame.touCount > 2) {
-            t = touziGame.tou3 + 1
-            tou3Img.setProperty(hmUI.prop.MORE, {
-              src: 'tou/' + t + '.png'
+          },
+          init:function(){
+            metronome.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
             })
-          }
-          if (touziGame.touCount > 3) {
-            t = touziGame.tou4 + 1
-            tou4Img.setProperty(hmUI.prop.MORE, {
-              src: 'tou/' + t + '.png'
+            setGroupVisible(metronome.group, false)
+
+            metronome.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
             })
-          }
-          updateGameStat()
-        })
 
-
-        let app7EditGroup = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(app7EditGroup, false)
-
-        app7EditGroup.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight,
-          color: darkBG
-        })
-
-        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 21,
-          y: 60,
-          w: 150,
-          h: 80,
-          text: '重置游戏',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            touziGame.reset()
-            updateGameStat()
-            showToast('重置完毕')
-          }
-        })
-
-        const ruleStr = app7EditGroup.createWidget(hmUI.widget.TEXT, {
-          x: 21,
-          y: 150,
-          w: 150,
-          h: 40,
-          text: '骰子数量：4',
-          color: lightText,
-          text_size: normalFont
-        })
-
-        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 10,
-          y: 240,
-          w: 81,
-          h: 75,
-          text: '-1',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            touziGame.changeTouCount(-1)
-            updateTouCount()
-            ruleStr.setProperty(hmUI.prop.MORE, {
-              text: '骰子数量：' + touziGame.touCount
+            metronome.editBtn = metronome.group.createWidget(hmUI.widget.BUTTON, {
+              x: 21,
+              y: 60,
+              w: 150,
+              h: 80,
+              text: '88',
+              press_color: lightBG,
+              normal_color: btnPress,
+              color: lightText,
+              text_size: titleFont,
+              radius: 15,
+              click_func: () => {
+                goin(metronome.editGroup)
+                pages.push('setting')
+              }
             })
-          }
-        })
 
-        app7EditGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 101,
-          y: 240,
-          w: 81,
-          h: 75,
-          text: '+1',
-          press_color: lightBG,
-          normal_color: btnPress,
-          color: lightText,
-          text_size: normalFont,
-          radius: 15,
-          click_func: () => {
-            touziGame.changeTouCount(1)
-            updateTouCount()
-            ruleStr.setProperty(hmUI.prop.MORE, {
-              text: '骰子数量：' + touziGame.touCount
+            for (let i = 0; i < 8; i++) {
+              metronome.meters.push(metronome.group.createWidget(hmUI.widget.FILL_RECT, {
+                x: i < 4 ? 5 : 105,
+                y: i % 4 * 60 + 166,
+                w: 85,
+                h: 55,
+                radius: 5,
+                color: 0x505050
+              }))
+            }
+
+            metronome.playBtn = metronome.group.createWidget(hmUI.widget.IMG, {
+              x: (fullWidth - iconBtnW) / 2,
+              y: bottomBtnY,
+              w: iconBtnW,
+              h: 50,
+              src: "play.png"
             })
-          }
-        })
+            
+            metronome.playBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if(metronome.timer == null){
+                metronome.resetMeters()
+                metronome.current = 0
+                metronome.t = 0
+                metronome.updateMeters()
+                metronome.timer = timer.createTimer(
+                  0,
+                  50,
+                  function (option) {
+                    metronome.t += 50
+                    var s = 60000 / metronome.bpm 
+                    if(metronome.t >= s){
+                      metronome.t = metronome.t % s 
+                      metronome.current ++
+                      if(metronome.current > 7){
+                        metronome.current = 0
+                        metronome.resetMeters()
+                      }
+                      metronome.updateMeters()
+                    }
+                  },
+                  {}
+                )
+              }else{
+                timer.stopTimer(metronome.timer)
+                metronome.timer = null
+              }
+            })
+            metronome.editGroup = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(metronome.editGroup, false)
 
-        function updateTouCount() {
-          tou1Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 0)
-          tou2Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 1)
-          tou3Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 2)
-          tou4Img.setProperty(hmUI.prop.VISIBLE, touziGame.touCount > 3)
+            metronome.editGroup.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              color: darkBG
+            })
+
+            metronome.edit.bpm = metronome.editGroup.createWidget(hmUI.widget.TEXT, {
+              x: 21,
+              y: 80,
+              w: fullWidth,
+              h: 40,
+              text: 'BPM：88',
+              color: lightText,
+              text_size: normalFont,
+              align_h: hmUI.align.CENTER_H
+            })
+            
+            metronome.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: 2,
+              y: 250,
+              text: '-1',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                metronome.editBpm(-1)
+              }
+            })
+
+            metronome.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: (fullWidth - 6) / 2 + 4,
+              y: 250,
+              text: '+1',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                metronome.editBpm(1)
+              }
+            })
+
+            metronome.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: 2,
+              y: 320,
+              text: '-5',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                metronome.editBpm(-5)
+              }
+            })
+
+            metronome.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: (fullWidth - 6) / 2 + 4,
+              y: 320,
+              text: '+5',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                metronome.editBpm(5)
+              }
+            })
+
+            metronome.switchVibrate = metronome.editGroup.createWidget(hmUI.widget.BUTTON, {
+              x: fullWidth / 4,
+              y: 390,
+              text: '震动:中',
+              w: fullWidth / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                metronome.vibrateLevel ++
+                if(metronome.vibrateLevel > 3){
+                  metronome.vibrateLevel = 0
+                }
+                var levelText = '无'
+                switch(metronome.vibrateLevel){
+                  case 0: levelText = '无';break;
+                  case 1: levelText = '低'; break;
+                  case 2: levelText = '中'; break;
+                  case 3: levelText = '高'; break;
+                  default:break;
+                }
+                metronome.switchVibrate.setProperty(hmUI.prop.MORE, {
+                  text: '震动:' + levelText,
+                  x: fullWidth / 4,
+                  y: 390,
+                  w: fullWidth / 2,
+                  h: 66,
+                })
+              }
+            })
+
+
+          },
+          play:function(){
+
+          }
         }
 
-        function updateGameStat() {
-          touziGame.game++;
-          var total = 0;
-          total += (touziGame.touCount > 0 ? (touziGame.tou1 + 1) : 0)
-          total += (touziGame.touCount > 1 ? (touziGame.tou2 + 1) : 0)
-          total += (touziGame.touCount > 2 ? (touziGame.tou3 + 1) : 0)
-          total += (touziGame.touCount > 3 ? (touziGame.tou4 + 1) : 0)
-          touStat.setProperty(hmUI.prop.MORE, {
-            x: 21,
-            y: 60,
-            w: 150,
-            h: 80,
-            text: '第' + touziGame.game + '轮\n总点数' + total,
+
+        //--------------------------------apps-------------------------------------
+        var apps = [qr1, qr2, eatWhat, counter, touzi, metronome,ruler, about]
+
+        for (let i = 0; i < apps.length; i++) {
+          const app = apps[i];
+          var m = menuGroup.createWidget(hmUI.widget.BUTTON, {
+            x: 5,
+            y: 70 + i % pageSize * 80,
+            w: fullWidth - 10,
+            h: 76,
+            press_color: lightBG,
+            normal_color: btnPress,
+            text: app.title,
+            color: lightText,
+            text_size: 28,
+            radius: 48,
+            click_func: () => {
+              openApp(i)
+            }
           })
+          menuItems.push(m)
         }
+
+        for (let i = 0; i < apps.length; i++) {
+          const app = apps[i];
+          app.init()
+        }
+
+        switchMenu()
 
         //--------------------------------input box-------------------------------------
 
-        var inputTarget = null;
-        var inputStr = '';
-        var inputCode = '';
-
-        let inputGroup = hmUI.createWidget(hmUI.widget.GROUP, {
-          x: 0,
-          y: 0,
-          w: fullWidth,
-          h: fullHeight
-        })
-        setGroupVisible(inputGroup, false)
-
-        inputGroup.createWidget(hmUI.widget.FILL_RECT, {
-          x: 0,
-          y: 94,
-          w: fullWidth,
-          h: 84,
-          radius: 15,
-          color: btnPress
-        })
-
-        let inputBox = inputGroup.createWidget(hmUI.widget.TEXT, {
-          x: 5,
-          y: 96,
-          w: fullWidth - 10,
-          h: 80,
-          text: '',
-          text_size: smallFont,
-          line_space: 2,
-          color: lightText,
-          text_style: hmUI.text_style.WRAP
-        })
-
-        let inputCodeBox = inputGroup.createWidget(hmUI.widget.TEXT, {
-          x: 5,
-          y: 220,
-          w: fullWidth - 10,
-          h: 24,
-          text: '',
-          text_size: smallFont,
-          line_space: 2,
-          color: lightText,
-          text_style: hmUI.text_style.WRAP
-        })
-
-        inputGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 2,
-          y: 250,
-          text: '0',
-          w: (fullWidth - 6) / 2,
-          h: 66,
-          radius: 5,
-          text_size: titleFont,
-          color: lightText,
-          press_color: lightBG,
-          normal_color: btnPress,
-          click_func: () => {
-            inputCodeX('0')
-          }
-        })
-
-        inputGroup.createWidget(hmUI.widget.BUTTON, {
-          x: (fullWidth - 6) / 2 + 4,
-          y: 250,
-          text: '1',
-          w: (fullWidth - 6) / 2,
-          h: 66,
-          radius: 5,
-          text_size: titleFont,
-          color: lightText,
-          press_color: lightBG,
-          normal_color: btnPress,
-          click_func: () => {
-            inputCodeX('1')
-          }
-        })
-
-        inputGroup.createWidget(hmUI.widget.BUTTON, {
-          x: 2,
-          y: 320,
-          text: '2',
-          w: (fullWidth - 6) / 2,
-          h: 66,
-          radius: 5,
-          text_size: titleFont,
-          color: lightText,
-          press_color: lightBG,
-          normal_color: btnPress,
-          click_func: () => {
-            inputCodeX('2')
-          }
-        })
-
-        inputGroup.createWidget(hmUI.widget.BUTTON, {
-          x: (fullWidth - 6) / 2 + 4,
-          y: 320,
-          text: '3',
-          w: (fullWidth - 6) / 2,
-          h: 66,
-          radius: 5,
-          text_size: titleFont,
-          color: lightText,
-          press_color: lightBG,
-          normal_color: btnPress,
-          click_func: () => {
-            inputCodeX('3')
-          }
-        })
-
-        inputGroup.createWidget(hmUI.widget.BUTTON, {
-          x: fullWidth / 3,
-          y: 390,
-          text: '←',
-          w: fullWidth / 3,
-          h: 66,
-          radius: 5,
-          text_size: titleFont,
-          color: lightText,
-          press_color: lightBG,
-          normal_color: btnPress,
-          click_func: () => {
-            backSpace()
-          }
-        })
-
-        function inputCodeX(n) {
-          if (inputCode.length > 3) {
-            inputCode = '';
-          } else {
-            inputCode += '' + n;
-            if (inputCode.length == 4) {
-              if (ks[inputCode] != undefined) {
-                inputStr += ks[inputCode];
+        var input = {
+          title:'输入框',
+          group:null,
+          inputTarget:null,
+          inputStr:'',
+          inputCode:'',
+          inputBox:null,
+          inputCodeBox:null,
+          inputCodeX:function(t){
+            if (input.inputCode.length > 3) {
+              input.inputCode = '';
+            } else {
+              input.inputCode += '' + n;
+              if (input.inputCode.length == 4) {
+                if (ks[input.inputCode] != undefined) {
+                  input.inputStr += ks[input.inputCode];
+                  input.updateInputBox()
+                }
+                input.inputCode = ''
+              }
+            }
+            input.inputCodeBox.setProperty(hmUI.prop.MORE, {
+              text: input.inputCode
+            })
+          },
+          backSpace:function(){
+            if (input.inputCode.length > 0) {
+              input.inputCode = input.inputCode.substring(0, input.inputCode.length - 1)
+              input.inputCodeBox.setProperty(hmUI.prop.MORE, {
+                text: input.inputCode
+              })
+            } else {
+              if (input.inputStr.length > 0) {
+                input.inputStr = input.inputStr.substring(0, input.inputStr.length - 1)
                 updateInputBox()
               }
-              inputCode = ''
             }
-          }
-          inputCodeBox.setProperty(hmUI.prop.MORE, {
-            text: inputCode
-          })
-        }
-
-        function updateInputBox() {
-          inputBox.setProperty(hmUI.prop.MORE, {
-            text: inputStr
-          })
-        }
-
-        function backSpace() {
-          if (inputCode.length > 0) {
-            inputCode = inputCode.substring(0, inputCode.length - 1)
-            inputCodeBox.setProperty(hmUI.prop.MORE, {
-              text: inputCode
+          },
+          updateInputBox:function(){
+            input.inputBox.setProperty(hmUI.prop.MORE, {
+              text: input.inputStr
             })
-          } else {
-            if (inputStr.length > 0) {
-              inputStr = inputStr.substring(0, inputStr.length - 1)
-              updateInputBox()
-            }
+          },
+          init:function(){
+            input.group = hmUI.createWidget(hmUI.widget.GROUP, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight
+            })
+            setGroupVisible(input.group, false)
+
+            input.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 94,
+              w: fullWidth,
+              h: 84,
+              radius: 15,
+              color: btnPress
+            })
+
+            input.inputBox = input.group.createWidget(hmUI.widget.TEXT, {
+              x: 5,
+              y: 96,
+              w: fullWidth - 10,
+              h: 80,
+              text: '',
+              text_size: smallFont,
+              line_space: 2,
+              color: lightText,
+              text_style: hmUI.text_style.WRAP
+            })
+
+            input.inputCodeBox = input.group.createWidget(hmUI.widget.TEXT, {
+              x: 5,
+              y: 220,
+              w: fullWidth - 10,
+              h: 24,
+              text: '',
+              text_size: smallFont,
+              line_space: 2,
+              color: lightText,
+              text_style: hmUI.text_style.WRAP
+            })
+
+            input.group.createWidget(hmUI.widget.BUTTON, {
+              x: 2,
+              y: 250,
+              text: '0',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                input.inputCodeX('0')
+              }
+            })
+
+            input.group.createWidget(hmUI.widget.BUTTON, {
+              x: (fullWidth - 6) / 2 + 4,
+              y: 250,
+              text: '1',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                input.inputCodeX('1')
+              }
+            })
+
+            input.group.createWidget(hmUI.widget.BUTTON, {
+              x: 2,
+              y: 320,
+              text: '2',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                input.inputCodeX('2')
+              }
+            })
+
+            input.group.createWidget(hmUI.widget.BUTTON, {
+              x: (fullWidth - 6) / 2 + 4,
+              y: 320,
+              text: '3',
+              w: (fullWidth - 6) / 2,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+                input.inputCodeX('3')
+              }
+            })
+
+            input.group.createWidget(hmUI.widget.BUTTON, {
+              x: fullWidth / 3,
+              y: 390,
+              text: '←',
+              w: fullWidth / 3,
+              h: 66,
+              radius: 5,
+              text_size: titleFont,
+              color: lightText,
+              press_color: lightBG,
+              normal_color: btnPress,
+              click_func: () => {
+               input.backSpace()
+              }
+            })
           }
         }
+
+        input.init()
 
         //---------------------------------nav----------------------------------------
         const backButton = hmUI.createWidget(hmUI.widget.IMG, {
@@ -1470,51 +1829,33 @@ try {
           if (pages[pages.length - 1] != "menu") {
             return
           }
-          switch (i) {
-            case 1:
-              goin(app1Group)
-              break;
-            case 2:
-              goin(app2Group)
-              break;
-            case 3:
-              goin(app3Group)
-              break;
-            case 4:
-              goin(app4Group)
-              break;
-            case 5:
-              goin(app5Group)
-              break;
-            case 6:
-              goin(app6Group)
-              break;
-            case 7:
-              goin(app7Group)
-              break;
-            default:
-              return
-          }
-          pages.push("app" + i)
+          goin(apps[i].group)
+          pages.push(apps[i].title)
         }
 
         function goback() { //返回上一层
           if (pages.length > 1) {
             var page = pages.pop()
             if (page == 'edit') {
-              setGroupVisible(inputGroup, false)
-              if (inputTarget == 'wechat') {
-                wechatCode = inputStr
+              setGroupVisible(input.group, false)
+              if (input.inputTarget == 'wechat') {
+                wechatCode = input.inputStr
                 updateWechatCode()
               }
-              if (inputTarget == 'alipay') {
-                alipayCode = inputStr
+              if (input.inputTarget == 'alipay') {
+                alipayCode = input.inputStr
                 updateAlipayCode()
               }
               setMaxBright()
             }
-            if (page == 'app1' || page == 'app2') {
+            if (page == '二维码1' || page == '二维码2') {
               resetBright()
+            }
+            if(page == '节拍器'){
+              if(metronome.timer != null){
+                timer.stopTimer(metronome.timer)
+              }
+              hmSetting.setBrightScreenCancel()
             }
           }
           if (views.length <= 0) {
@@ -1527,9 +1868,12 @@ try {
 
         function goin(ui) {
           views.push(ui);
-          if (ui == app1Group || ui == app2Group) {
+          if (ui == qr1.group || ui == qr2.group) {
             checkBright()
             setMaxBright()
+          }
+          if(ui == metronome.group){
+            hmSetting.setBrightScreen(600)
           }
           setGroupVisible(ui, true);
         }
@@ -1561,6 +1905,7 @@ try {
           } catch (e) {}
         }
 
+
         function updateBG() {
           var h = Math.ceil(jstime.hour / 3)
           if (h > bgPics.length - 1) {
@@ -1576,7 +1921,13 @@ try {
             moonFace.setProperty(hmUI.prop.MORE, {
               src: moonArray[jstime.lunar_day]
             })
+          }else{
+            var moonX = Math.floor((Date.now() - 576000000) / 2551392000)
+            moonFace.setProperty(hmUI.prop.MORE, {
+              src: moonArray[moonX]
+            })
           }
+          about.pushLog("bat:" + battery.current)
           if (battery.current){
             batIcon.setProperty(hmUI.prop.MORE, {
               x: 140,
@@ -1584,10 +1935,9 @@ try {
               level: Math.floor(battery.current / 10)
             })
           }
-          pushLog('update bg\n')
         }
 
-        pushLog('V1.1\n')
+        about.pushLog('V1.2\n')
         updateBG()
 
         battery.addEventListener(hmSensor.event.CHANGE, function () {
