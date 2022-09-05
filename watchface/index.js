@@ -383,11 +383,10 @@ try {
 
         var qr1 = {
           title: '二维码1',
-          showIndex: 0,
-          img: null,
+          showText:'wxp://f2f0eWEfpXmzZbm81ToT4fYhhnx1_w1LvQzoYkZ1ZuZ-nYM',
           group: null,
-          img: null,
-          nextBtn: null,
+          qrcode:null,
+          editBtn:null,
           init: function () {
             qr1.group = hmUI.createWidget(hmUI.widget.GROUP, {
               x: 0,
@@ -418,30 +417,43 @@ try {
               align_h: hmUI.align.CENTER_H,
             })
 
-            qr1.img = qr1.group.createWidget(hmUI.widget.IMG, {
+            qr1.qrcode = qr1.group.createWidget(hmUI.widget.QRCODE, {
+              content: qr1.showText,
               x: 3,
               y: 120,
-              src: 'qr/wechat.png',
-              w: 186,
-              h: 186,
+              w: fullWidth - 6,
+              h: fullWidth - 6,
+              bg_x: 0,
+              bg_y: 116,
+              bg_w: fullWidth,
+              bg_h: fullWidth
             })
 
-            qr1.nextBtn = qr1.group.createWidget(hmUI.widget.IMG, {
+            qr1.editBtn = qr1.group.createWidget(hmUI.widget.IMG, {
               x: (fullWidth - iconBtnW) / 2,
               y: bottomBtnY,
               w: iconBtnW,
               h: 50,
-              src: "next.png"
+              src: "edit.png"
             })
 
-            qr1.nextBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-              qr1.showIndex++;
-              if (qr1.showIndex >= img_array.length) {
-                qr1.showIndex = 0
-              }
-              qr1.img.setProperty(hmUI.prop.MORE, {
-                src: img_array[qr1.showIndex]
-              })
+            qr1.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              input.inputTarget = 'qr1'
+              input.inputStr = qr1.showText
+              goin(input.group)
+            })
+          },
+          update:function(){
+            qr1.qrcode.setProperty(hmUI.prop.MORE, {
+              content: qr1.showText,
+              x: 3,
+              y: 120,
+              w: fullWidth - 6,
+              h: fullWidth - 6,
+              bg_x: 0,
+              bg_y: 116,
+              bg_w: fullWidth,
+              bg_h: fullWidth
             })
           }
         }
@@ -450,11 +462,11 @@ try {
 
         var qr2 = {
           title: '二维码2',
-          showIndex: 0,
-          img: null,
+          showText: 'https://qr.alipay.com/fkx181795dfsbwm8usxip57',
           group: null,
-          img: null,
-          nextBtn: null,
+          qrcode: null,
+          editBtn: null,
+          editGroup: null,
           init: function () {
             qr2.group = hmUI.createWidget(hmUI.widget.GROUP, {
               x: 0,
@@ -485,30 +497,43 @@ try {
               align_h: hmUI.align.CENTER_H,
             })
 
-            qr2.img = qr2.group.createWidget(hmUI.widget.IMG, {
+            qr2.qrcode = qr2.group.createWidget(hmUI.widget.QRCODE, {
+              content: qr2.showText,
               x: 3,
               y: 120,
-              src: 'qr/alipay.png',
-              w: 186,
-              h: 186,
+              w: fullWidth - 6,
+              h: fullWidth - 6,
+              bg_x: 0,
+              bg_y: 116,
+              bg_w: fullWidth,
+              bg_h: fullWidth
             })
 
-            qr2.nextBtn = qr2.group.createWidget(hmUI.widget.IMG, {
+            qr2.editBtn = qr2.group.createWidget(hmUI.widget.IMG, {
               x: (fullWidth - iconBtnW) / 2,
               y: bottomBtnY,
               w: iconBtnW,
               h: 50,
-              src: "next.png"
+              src: "edit.png"
             })
 
-            qr2.nextBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-              qr2.showIndex++;
-              if (qr2.showIndex >= img_array.length) {
-                qr2.showIndex = 0
-              }
-              qr2.img.setProperty(hmUI.prop.MORE, {
-                src: img_array[qr2.showIndex]
-              })
+            qr2.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              input.inputTarget = 'qr2'
+              input.inputStr = qr2.showText
+              goin(input.group)
+            })
+          },
+          update: function () {
+            qr2.qrcode.setProperty(hmUI.prop.MORE, {
+              content: qr2.showText,
+              x: 3,
+              y: 120,
+              w: fullWidth - 6,
+              h: fullWidth - 6,
+              bg_x: 0,
+              bg_y: 116,
+              bg_w: fullWidth,
+              bg_h: fullWidth
             })
           }
         }
@@ -1838,13 +1863,13 @@ try {
             var page = pages.pop()
             if (page == 'edit') {
               setGroupVisible(input.group, false)
-              if (input.inputTarget == 'wechat') {
-                wechatCode = input.inputStr
-                updateWechatCode()
+              if (input.inputTarget == 'qr1') {
+                qr1.showText = input.inputStr
+                qr1.update()
               }
-              if (input.inputTarget == 'alipay') {
-                alipayCode = input.inputStr
-                updateAlipayCode()
+              if (input.inputTarget == 'qr2') {
+                qr2.showText = input.inputStr
+                qr2.update()
               }
               setMaxBright()
             }

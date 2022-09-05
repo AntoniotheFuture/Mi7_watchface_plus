@@ -1,12 +1,12 @@
 {
   "configVersion": "v1",
   "app": {
-      "appId": 166120001,
+      "appId": 199450000,
       "appName": "增强版表盘",
       "appType": "watchface",
       "version": {
-          "code": 3,
-          "name": "1.2"
+          "code": 4,
+          "name": "1.3"
       },
       "icon": "1.png",
       "vender": "Antonio Future",
