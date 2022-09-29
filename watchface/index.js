@@ -437,11 +437,7 @@ try {
               src: "edit.png"
             })
 
-            qr1.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-              input.inputTarget = 'qr1'
-              input.inputStr = qr1.showText
-              goin(input.group)
-            })
+           
           },
           update:function(){
             qr1.qrcode.setProperty(hmUI.prop.MORE, {
@@ -455,6 +451,7 @@ try {
               bg_w: fullWidth,
               bg_h: fullWidth
             })
+            logger.log("qrcode updated:" + qr1.showText);
           }
         }
 
@@ -517,11 +514,6 @@ try {
               src: "edit.png"
             })
 
-            qr2.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
-              input.inputTarget = 'qr2'
-              input.inputStr = qr2.showText
-              goin(input.group)
-            })
           },
           update: function () {
             qr2.qrcode.setProperty(hmUI.prop.MORE, {
@@ -535,6 +527,7 @@ try {
               bg_w: fullWidth,
               bg_h: fullWidth
             })
+            logger.log("qrcode updated:" + qr2.showText);
           }
         }
 
@@ -1050,6 +1043,14 @@ try {
               about.logs.setProperty(hmUI.prop.VISIBLE, true)
             })
 
+            about.logs.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              if (pages[pages.length - 1] != about.title) {
+                return
+              }
+              about.logBg.setProperty(hmUI.prop.VISIBLE, false)
+              about.logs.setProperty(hmUI.prop.VISIBLE, false)
+            })
+
 
 
           }
@@ -1404,8 +1405,8 @@ try {
           },
           editBpm:function(x){
             metronome.bpm += x
-            if(metronome.bpm > 240){
-              metronome.bpm = 240
+            if(metronome.bpm > 360){
+              metronome.bpm = 360
             }
             if (metronome.bpm < 1) {
               metronome.bpm = 1
@@ -1659,12 +1660,15 @@ try {
           menuItems.push(m)
         }
 
+       
+
         for (let i = 0; i < apps.length; i++) {
           const app = apps[i];
           app.init()
         }
 
         switchMenu()
+
 
         //--------------------------------input box-------------------------------------
 
@@ -1680,7 +1684,7 @@ try {
             if (input.inputCode.length > 3) {
               input.inputCode = '';
             } else {
-              input.inputCode += '' + n;
+              input.inputCode += '' + t;
               if (input.inputCode.length == 4) {
                 if (ks[input.inputCode] != undefined) {
                   input.inputStr += ks[input.inputCode];
@@ -1702,7 +1706,7 @@ try {
             } else {
               if (input.inputStr.length > 0) {
                 input.inputStr = input.inputStr.substring(0, input.inputStr.length - 1)
-                updateInputBox()
+                input.updateInputBox()
               }
             }
           },
@@ -1719,6 +1723,15 @@ try {
               h: fullHeight
             })
             setGroupVisible(input.group, false)
+
+            input.group.createWidget(hmUI.widget.FILL_RECT, {
+              x: 0,
+              y: 0,
+              w: fullWidth,
+              h: fullHeight,
+              radius: 0,
+              color: darkBG
+            })
 
             input.group.createWidget(hmUI.widget.FILL_RECT, {
               x: 0,
@@ -1832,10 +1845,31 @@ try {
                input.backSpace()
               }
             })
+
+            qr1.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              input.inputTarget = 'qr1'
+              input.inputStr = qr1.showText
+              goin(input.group)
+              pages.push('edit')
+              input.updateInputBox()
+            })
+
+
+            qr2.editBtn.addEventListener(hmUI.event.CLICK_DOWN, function (info) {
+              input.inputTarget = 'qr2'
+              input.inputStr = qr2.showText
+              goin(input.group)
+              pages.push('edit')
+              input.updateInputBox()
+            })
+
+
           }
         }
 
         input.init()
+        
+
 
         //---------------------------------nav----------------------------------------
         const backButton = hmUI.createWidget(hmUI.widget.IMG, {
